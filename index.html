@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <!-- OG Meta (동적으로 config에서 채워짐) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" id="og-title" content="" />
+  <meta property="og:description" id="og-description" content="" />
+  <meta property="og:image" id="og-image" content="" />
+
+  <title id="page-title">모바일 청첩장</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Serif+KR:wght@200;300;400;500;600&family=Great+Vibes&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Intro / Thankyou image preload -->
+  <link rel="preload" as="image" href="images/intro/intro-bg.png" />
+  <link rel="preload" as="image" href="images/intro/envelope.png" />
+  <link rel="preload" as="image" href="images/hero/1.png" />
+  <link rel="preload" as="image" href="images/thankyou/1.png" />
+</head>
+<body>
+
+  <!-- ========== Curtain / Veil Opening ========== -->
+<div class="curtain" id="curtain">
+  <div class="curtain__frame">
+    <img class="curtain__image" src="images/intro/envelope.png" alt="봉투 모양 초대장" fetchpriority="high" decoding="sync" />
+    <button class="curtain__seal-hit" id="curtain-open" type="button" aria-label="실링을 눌러 봉투를 엽니다">
+      <span class="curtain__seal-ring" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="curtain__content">
+    <p class="curtain__hint">
+      <span class="curtain__hint-kr">봉투를 열어보세요</span>
+    </p>
+  </div>
+</div>
+
+  <!-- ========== Toast ========== -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ========== Background Music ========== -->
+  <audio id="bgm" src="audio/bgm.mp3" loop preload="auto" autoplay playsinline></audio>
+
+  <button class="music-toggle" id="music-toggle" type="button" aria-label="음악 켜기/끄기">
+    <span class="music-toggle__icon" aria-hidden="true">♪</span>
+  </button>
+
+
+  <!-- ========== Main ========== -->
+  <main class="invitation">
+
+    <!-- ── Hero Section ── -->
+    <section class="section hero hero--photo-text" id="hero">
+      <div class="floral-frame">
+        <div class="hero__photo-wrap">
+          <img id="hero-img" src="" alt="웨딩 사진" loading="lazy" />
+          <!-- Countdown -->
+          <div class="countdown anim-target" id="countdown">
+            <div class="countdown__item">
+              <span class="countdown__num" id="cd-days">0</span>
+              <span class="countdown__label">DAYS</span>
+            </div>
+            <div class="countdown__item">
+              <span class="countdown__num" id="cd-hours">0</span>
+              <span class="countdown__label">HOURS</span>
+            </div>
+            <div class="countdown__item">
+              <span class="countdown__num" id="cd-minutes">0</span>
+              <span class="countdown__label">MIN</span>
+            </div>
+            <div class="countdown__item">
+              <span class="countdown__num" id="cd-seconds">0</span>
+              <span class="countdown__label">SEC</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero__info anim-target">
+        <h1 class="hero__names" id="hero-names"></h1>
+        <p class="hero__date" id="hero-date"></p>
+        <p class="hero__venue" id="hero-venue"></p>
+      </div>
+    </section>
+
+    
+    <!-- ── Greeting Section ── -->
+    <section class="section greeting" id="greeting">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font" id="greeting-title"></h2>
+        <p class="greeting__text" id="greeting-text"></p>
+        <div class="greeting__parents" id="greeting-parents"></div>
+      </div>
+      <div class="floral-divider"></div>
+    </section>
+
+    <!-- ── Calendar Section ── -->
+    <section class="section calendar-section" id="calendar-section">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font">Wedding Day</h2>
+        <div class="calendar" id="calendar"></div>
+      </div>
+    </section>
+    <!-- ── Our Story ── -->
+    <section class="section story" id="story">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font" id="story-title"></h2>
+        <p class="story__text" id="story-text"></p>
+      </div>
+      <div class="story__images" id="story-images">
+        <div class="story-envelope-slide" id="story-envelope-slide" aria-label="봉투 안 사진이 스르륵 올라오는 우리의 이야기">
+          <div class="story-envelope-slide__stage">
+            <img class="story-envelope-slide__base" src="images/story/00.png" alt="봉투 첫 장면" loading="lazy" decoding="async" />
+            <div class="story-envelope-slide__card" aria-hidden="true">
+              <img class="story-envelope-slide__photo is-active" src="images/story/01.png" alt="" loading="lazy" decoding="async" data-story-photo="0" />
+              <img class="story-envelope-slide__photo" src="images/story/02.png" alt="" loading="lazy" decoding="async" data-story-photo="1" />
+              <img class="story-envelope-slide__photo" src="images/story/03.png" alt="" loading="lazy" decoding="async" data-story-photo="2" />
+              <img class="story-envelope-slide__photo" src="images/story/04.png" alt="" loading="lazy" decoding="async" data-story-photo="3" />
+            </div>
+            <img class="story-envelope-slide__front" src="images/story/front-envelope-overlay.png" alt="" loading="lazy" decoding="async" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+      <div class="floral-divider"></div>
+    </section>
+
+    <!-- ── Gallery ── -->
+    <section class="section gallery" id="gallery">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font">Gallery</h2>
+      </div>
+      <div class="gallery__grid" id="gallery-grid"></div>
+      <div class="floral-divider"></div>
+    </section>
+
+    <!-- ── Location ── -->
+    <section class="section location" id="location">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font">Location</h2>
+        <p class="location__venue" id="loc-venue"></p>
+        <p class="location__hall" id="loc-hall"></p>
+        <p class="location__address" id="loc-address"></p>
+        <p class="location__tel" id="loc-tel"></p>
+        <div class="location__map-wrap">
+          <img id="loc-map-img" src="images/location/1.png" alt="오시는 길 약도" loading="lazy" />
+        </div>
+
+        <div class="location__buttons">
+          <button class="btn btn--rose" id="btn-copy-address">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            주소 복사
+          </button>
+          <a class="btn btn--outline" id="btn-kakao-map" href="" target="_blank" rel="noopener">
+            카카오맵
+          </a>
+          <a class="btn btn--outline" id="btn-naver-map" href="" target="_blank" rel="noopener">
+            네이버 지도
+          </a>
+          <a class="btn btn--outline" id="btn-tmap" href="" target="_blank" rel="noopener">
+            티맵
+          </a>
+        </div>
+      </div>
+      <div class="floral-divider"></div>
+    </section>
+
+    <!-- ── Account (축의금) ── -->
+    <section class="section account" id="account">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font">Celebration</h2>
+        <p class="account__subtitle">축하의 마음을 전해주세요</p>
+
+        <!-- 신랑측 -->
+        <div class="accordion" id="acc-groom">
+          <button class="accordion__toggle" data-target="acc-groom-body">
+            <span>신랑측 계좌번호</span>
+            <svg class="accordion__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion__body" id="acc-groom-body"></div>
+        </div>
+
+        <!-- 신부측 -->
+        <div class="accordion" id="acc-bride">
+          <button class="accordion__toggle" data-target="acc-bride-body">
+            <span>신부측 계좌번호</span>
+            <svg class="accordion__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="accordion__body" id="acc-bride-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Footer ── -->
+    <footer class="footer footer--with-photo">
+      <p class="footer__text script-font">Thank you</p>
+      <div class="thankyou-photo" aria-label="감사 인사 배경 사진">
+        <img src="images/thankyou/1.png" alt="Thank you" loading="lazy" />
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- ========== Photo Viewer Modal ========== -->
+  <div class="viewer" id="viewer" aria-hidden="true">
+    <div class="viewer__backdrop"></div>
+    <button class="viewer__close" id="viewer-close" aria-label="닫기">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="viewer__counter" id="viewer-counter"></div>
+    <div class="viewer__track" id="viewer-track"></div>
+    <button class="viewer__nav viewer__nav--prev" id="viewer-prev" aria-label="이전">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="viewer__nav viewer__nav--next" id="viewer-next" aria-label="다음">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+    </button>
+  </div>
+
+  <!-- ========== Attendance RSVP Modal - Editorial Soft Blue ========== -->
+  <div class="rsvp-modal" id="attendModal" aria-hidden="true">
+    <div class="rsvp-modal__backdrop" data-rsvp-close></div>
+
+    <section class="rsvp-modal__panel" role="dialog" aria-modal="true" aria-labelledby="rsvp-title">
+      <button class="rsvp-modal__close" id="rsvp-close" type="button" aria-label="닫기">&times;</button>
+
+      <h2 class="rsvp-modal__title" id="rsvp-title">참석 여부</h2>
+      <p class="rsvp-modal__summary">
+        <strong><span id="rsvp-groom-name">이현준</span> &amp; <span id="rsvp-bride-name">박상빈</span></strong><br />
+        <span id="rsvp-date-text">2026.10.17. 토요일 오후 4시 20분</span><br />
+        <span id="rsvp-venue-text">나비스퀘어</span>
+      </p>
+
+      <form class="rsvp-form" id="rsvp-form">
+        <label class="rsvp-label" for="rsvp-name">성함</label>
+        <input class="rsvp-input" id="rsvp-name" name="name" type="text" placeholder="예) 홍길동" maxlength="20" autocomplete="name" required />
+
+        <div class="rsvp-choice-group" role="radiogroup" aria-label="참석 여부">
+          <input id="rsvp-attend" name="attendance" type="radio" value="attend" checked />
+          <label for="rsvp-attend">참석</label>
+
+          <input id="rsvp-absent" name="attendance" type="radio" value="absent" />
+          <label for="rsvp-absent">불참</label>
+        </div>
+
+        <div class="rsvp-counter" id="rsvp-counter" aria-label="참석 인원 선택">
+          <button type="button" id="rsvp-minus" aria-label="참석 인원 감소">−</button>
+          <span id="rsvp-count" data-count="1">1명</span>
+          <button type="button" id="rsvp-plus" aria-label="참석 인원 증가">＋</button>
+        </div>
+        <p class="rsvp-help" id="rsvp-help">본인 포함 참석 인원</p>
+
+        <button class="rsvp-submit" id="rsvp-submit" type="submit">전달하기</button>
+
+        <label class="rsvp-hide-today">
+          <input id="rsvp-hide-today" type="checkbox" />
+          <span>오늘 하루 보지 않기</span>
+        </label>
+
+        <p class="rsvp-message" id="rsvp-message" aria-live="polite"></p>
+      </form>
+    </section>
+  </div>
+
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+  <script src="music.js"></script>
+  <script src="rsvp.js"></script>
+</body>
+</html>
