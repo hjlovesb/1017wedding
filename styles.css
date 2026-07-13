@@ -11415,3 +11415,1187 @@ body:not(.intro-active) .hero {
     font-size: 0.83rem !important;
   }
 }
+
+
+/* ======================================================
+   GALLERY UNIFORM FRAME — 모든 사진을 같은 크기(4:5)로
+   가로/세로 사진 모두 프레임에 꽉 차게(cover), 탭하면 원본
+   비율로 확대(라이트박스)됩니다.
+   ====================================================== */
+#gallery-grid .gallery__viewport {
+  aspect-ratio: 4 / 5 !important;
+  height: auto !important;
+}
+
+#gallery-grid .gallery__track {
+  height: 100% !important;
+}
+
+#gallery-grid .gallery__item {
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+#gallery-grid .gallery__item img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* ======================================================
+   WEDDING TICKET — 티켓을 클릭해보세요!
+   ====================================================== */
+.ticket-section {
+  padding-top: 34px !important;
+  padding-bottom: 44px !important;
+  text-align: center;
+}
+
+.ticket-hint {
+  margin: 0 0 16px;
+}
+
+.ticket-hint__bubble {
+  display: inline-block;
+  position: relative;
+  padding: 8px 18px;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 0.84rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #6d5c4b;
+  background: rgba(166, 138, 96, 0.12);
+  border: 1px solid rgba(166, 138, 96, 0.35);
+  border-radius: 999px;
+  animation: ticketHintBob 2.2s ease-in-out infinite;
+}
+
+.ticket-hint__bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  border-right: 1px solid rgba(166, 138, 96, 0.35);
+  border-bottom: 1px solid rgba(166, 138, 96, 0.35);
+  background: #f6f0e6;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+@keyframes ticketHintBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+.ticket-flip {
+  display: block;
+  width: min(92%, 460px);
+  margin: 0 auto;
+  aspect-ratio: 1600 / 700;
+  perspective: 1200px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.ticket-flip__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.22, 0.8, 0.3, 1);
+  animation: ticketFloat 3.6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.ticket-flip.is-flipped .ticket-flip__inner {
+  transform: rotateY(180deg);
+}
+
+@keyframes ticketFloat {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -7px; }
+}
+
+.ticket-flip__face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  filter: drop-shadow(0 12px 22px rgba(76, 62, 48, 0.18));
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.ticket-flip__back {
+  transform: rotateY(180deg);
+}
+
+.ticket-flip:active .ticket-flip__inner {
+  transition-duration: 0.5s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-hint__bubble,
+  .ticket-flip__inner {
+    animation: none !important;
+  }
+}
+
+/* ======================================================
+   CURTAIN OPEN CUE — '청첩장 열기' 버튼 은은한 유도 효과
+   버튼 자리에서 부드러운 빛이 숨쉬고(::before),
+   주기적으로 얇은 링이 퍼져나가(::after) 시선을 모읍니다.
+   기존 규칙과 충돌하지 않도록 가상요소만 사용합니다.
+   ====================================================== */
+#curtain .curtain__seal-hit::before {
+  content: '';
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(248, 232, 205, 0.32) 0%,
+    rgba(248, 232, 205, 0.14) 42%,
+    rgba(248, 232, 205, 0) 70%);
+  pointer-events: none;
+  animation: sealGlowBreath 3s ease-in-out infinite;
+}
+
+@keyframes sealGlowBreath {
+  0%, 100% { opacity: 0.35; transform: scale(0.92); }
+  50%      { opacity: 1;    transform: scale(1.06); }
+}
+
+/* 퍼져나가는 얇은 링 (기존 ::after 아우라와 충돌하지 않도록 링 span의 가상요소 사용) */
+#curtain .curtain__seal-ring::after {
+  content: '';
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  border: 1.2px solid rgba(248, 232, 205, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  animation: sealRipple 3s ease-out infinite;
+}
+
+#curtain .curtain__seal-ring {
+  position: relative !important;
+}
+
+@keyframes sealRipple {
+  0%   { opacity: 0;    transform: scale(0.82); }
+  16%  { opacity: 0.75; }
+  68%  { opacity: 0;    transform: scale(1.5); }
+  100% { opacity: 0;    transform: scale(1.5); }
+}
+
+/* 문구도 은은하게 호흡 */
+#curtain .curtain__hint-kr {
+  animation: hintBreath 3s ease-in-out infinite;
+}
+
+@keyframes hintBreath {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #curtain .curtain__seal-hit::before,
+  #curtain .curtain__seal-ring::after,
+  #curtain .curtain__hint-kr {
+    animation: none !important;
+  }
+}
+
+
+/* ======================================================
+   OUR DAY COUNTDOWN — 최종 리파인 (은은한 타이포그래피형)
+   박스/카드/그림자 전부 제거, 얇은 세리프 숫자와
+   작은 레이블만으로 캘린더와 한 호흡으로 이어집니다.
+   ====================================================== */
+.calendar-section .our-day-countdown {
+  width: min(340px, calc(100% - 40px)) !important;
+  max-width: 340px !important;
+  margin: 44px auto 0 !important;
+  column-gap: 0 !important;
+}
+
+.calendar-section .our-day-countdown .countdown__item,
+.calendar-section .our-day-countdown .countdown__item::before {
+  background: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.calendar-section .our-day-countdown .countdown__item {
+  min-height: 0 !important;
+  padding: 2px 0 !important;
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* 단위 사이 아주 얇은 구분점 */
+.calendar-section .our-day-countdown .countdown__item:not(:last-child)::after {
+  content: '·' !important;
+  display: block !important;
+  position: absolute !important;
+  right: -2px !important;
+  top: 34% !important;
+  width: auto !important;
+  height: auto !important;
+  background: none !important;
+  font-family: 'Cormorant Garamond', serif !important;
+  font-size: 0.9rem !important;
+  color: rgba(166, 138, 96, 0.45) !important;
+}
+
+.calendar-section .our-day-countdown .countdown__num {
+  margin: 0 0 6px !important;
+  font-family: 'Cormorant Garamond', serif !important;
+  font-weight: 300 !important;
+  font-size: 1.9rem !important;
+  line-height: 1 !important;
+  color: #55504a !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.calendar-section .our-day-countdown .countdown__label {
+  font-family: 'Cormorant Garamond', serif !important;
+  font-size: 0.5rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.26em !important;
+  text-indent: 0.26em !important;
+  color: rgba(139, 125, 108, 0.62) !important;
+}
+
+.our-day-countdown__eyebrow {
+  margin: 0 0 18px !important;
+  font-family: 'Cormorant Garamond', serif !important;
+  font-size: 0.72rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.4em !important;
+  text-indent: 0.4em !important;
+  color: rgba(166, 138, 96, 0.75) !important;
+}
+
+.our-day-countdown__swan {
+  display: none !important;
+}
+
+.our-day-countdown__message {
+  margin: 20px 0 0 !important;
+  font-family: 'Noto Serif KR', serif !important;
+  font-weight: 300 !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.01em !important;
+  color: rgba(90, 83, 75, 0.78) !important;
+}
+
+.our-day-countdown__message strong {
+  font-weight: 500 !important;
+  color: #7a6a55 !important;
+}
+
+@media (max-width: 360px) {
+  .calendar-section .our-day-countdown .countdown__num {
+    font-size: 1.66rem !important;
+  }
+}
+
+
+/* ======================================================
+   TICKET REFINE — 말풍선 제거, 은은한 문구로
+   ====================================================== */
+.ticket-hint {
+  margin: 0 0 18px !important;
+}
+
+.ticket-hint__bubble {
+  display: inline-block !important;
+  padding: 0 !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  font-family: 'Noto Serif KR', serif !important;
+  font-size: 0.74rem !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.22em !important;
+  text-indent: 0.22em !important;
+  color: rgba(139, 122, 101, 0.7) !important;
+  animation: ticketHintFade 3.4s ease-in-out infinite !important;
+}
+
+.ticket-hint__bubble::after {
+  content: none !important;
+  display: none !important;
+}
+
+@keyframes ticketHintFade {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 1; }
+}
+
+/* 티켓 그림자·부유 모션도 한층 절제되게 */
+.ticket-flip__inner {
+  animation-duration: 4.6s !important;
+}
+
+@keyframes ticketFloat {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -4px; }
+}
+
+.ticket-flip__face {
+  filter: drop-shadow(0 8px 16px rgba(76, 62, 48, 0.12)) !important;
+}
+
+
+/* ======================================================
+   OUR STORY — 자필 편지
+   두 사람이 주고받은 손편지를 종이 카드 위에 얹어
+   살짝 기울여 배치합니다.
+   ====================================================== */
+.story__letters {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  width: min(100%, 430px);
+  margin: 30px auto 0;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.story-letter {
+  margin: 0;
+}
+
+/* 회전·테이프 장식 없이, 편지 자체가 은은하게 보이도록 심플한 종이 카드 */
+.story-letter__paper {
+  background: #fffefb;
+  padding: 20px 18px;
+  border: 1px solid rgba(172, 146, 106, 0.18);
+  border-radius: 4px;
+  box-shadow:
+    0 1px 3px rgba(76, 62, 48, 0.04),
+    0 10px 22px rgba(76, 62, 48, 0.06);
+  position: relative;
+}
+
+.story-letter__paper img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 2px;
+}
+
+.story-letter__caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.story-letter__year {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  color: rgba(166, 138, 96, 0.85);
+}
+
+.story-letter__from {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 0.78rem;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+  color: rgba(90, 83, 75, 0.72);
+}
+
+@media (max-width: 480px) {
+  .story__letters {
+    padding: 0 14px;
+    gap: 30px;
+  }
+}
+
+
+/* ======================================================
+   GALLERY v20 — 참고 템플릿형 peek 캐러셀
+   가운데 사진 + 양옆 사진이 살짝 보이고, 네이티브 스크롤로
+   손가락을 그대로 따라오며 스냅됩니다. 사진은 잘리지 않고
+   전체가 보이도록 통일된 프레임(3:4) 안에 담깁니다.
+   ====================================================== */
+#gallery-grid.gallery__grid {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+#gallery-grid .gallery__scroller {
+  display: flex !important;
+  gap: 12px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  -webkit-overflow-scrolling: touch !important;
+  /* 첫/마지막 사진도 화면 가운데 올 수 있게 좌우 패딩 */
+  padding: 4px calc(50vw - min(36vw, 160px)) 4px !important;
+  scrollbar-width: none !important;
+}
+
+#gallery-grid .gallery__scroller::-webkit-scrollbar {
+  display: none !important;
+}
+
+#gallery-grid .gallery__cell {
+  flex: 0 0 auto !important;
+  width: min(72vw, 320px) !important;
+  aspect-ratio: 3 / 4 !important;
+  scroll-snap-align: center !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #f6f2ea !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+#gallery-grid .gallery__cell img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;   /* 잘리지 않게 전체 표시 */
+  object-position: center !important;
+  display: block !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  pointer-events: none !important;
+}
+
+#gallery-grid .gallery__counter {
+  margin-top: 14px !important;
+  text-align: center !important;
+  font-family: 'Cormorant Garamond', serif !important;
+  font-size: 0.78rem !important;
+  letter-spacing: 0.1em !important;
+  color: rgba(74, 74, 68, 0.42) !important;
+}
+
+/* 확대(라이트박스) — 더 이상 확대 불가 */
+#viewer {
+  touch-action: pan-x pan-y !important;
+}
+
+#viewer .viewer__slide img {
+  max-width: 92vw !important;
+  max-height: 80vh !important;
+  touch-action: none !important;
+}
+
+
+/* ── 네이버 지도 ── */
+.location__map-wrap .naver-map {
+  width: 100%;
+  height: 300px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(172, 146, 106, 0.25);
+}
+
+
+/* ── OUR DAY 카운트다운: 캘린더보다 시선이 덜 가도록 한층 축소 ── */
+.calendar-section .our-day-countdown .countdown__num {
+  font-size: 1.42rem !important;
+  color: rgba(85, 80, 74, 0.82) !important;
+}
+
+.calendar-section .our-day-countdown .countdown__label {
+  font-size: 0.4rem !important;
+  letter-spacing: 0.22em !important;
+  color: rgba(139, 125, 108, 0.5) !important;
+}
+
+.calendar-section .our-day-countdown .countdown__item:not(:last-child)::after {
+  font-size: 0.72rem !important;
+  top: 30% !important;
+}
+
+.our-day-countdown__eyebrow {
+  font-size: 0.62rem !important;
+  color: rgba(166, 138, 96, 0.6) !important;
+}
+
+.our-day-countdown__message {
+  font-size: 0.74rem !important;
+  color: rgba(90, 83, 75, 0.62) !important;
+}
+
+@media (max-width: 360px) {
+  .calendar-section .our-day-countdown .countdown__num {
+    font-size: 1.28rem !important;
+  }
+}
+
+
+/* ── GALLERY v21: 필름스트립 (작은 통일 프레임 + cover) ── */
+#gallery-grid .gallery__scroller {
+  gap: 10px !important;
+  padding: 4px calc(50vw - min(24vw, 105px)) 4px !important;
+}
+
+#gallery-grid .gallery__cell {
+  width: min(48vw, 210px) !important;
+  aspect-ratio: 3 / 4 !important;
+  border-radius: 3px !important;
+  background: #efe9df !important;
+}
+
+#gallery-grid .gallery__cell img {
+  object-fit: cover !important;   /* 가로/세로 상관없이 프레임에 꽉 차게 통일 */
+}
+
+
+/* ======================================================
+   TRANSPORT 소제목 리파인 — 진한 배경 제거, 은은한 골드
+   ====================================================== */
+.location-transport__heading {
+  display: block !important;
+  margin: 0 0 10px !important;
+  padding: 0 0 7px !important;
+  background: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid rgba(172, 146, 106, 0.22) !important;
+  font-family: 'Noto Serif KR', serif !important;
+  font-size: 0.82rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1em !important;
+  color: #8a7a5f !important;
+  line-height: 1.4 !important;
+}
+
+.location-transport__block {
+  margin-bottom: 24px !important;
+}
+
+.location-transport__line {
+  font-size: 0.82rem !important;
+  color: rgba(90, 83, 75, 0.75) !important;
+}
+
+.location-transport__note {
+  font-size: 0.78rem !important;
+  color: rgba(139, 122, 101, 0.8) !important;
+}
+
+/* 지도 밑 3버튼 — 한 줄 정렬 */
+.location__buttons.location__buttons--maps {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+}
+
+.location__buttons.location__buttons--maps .btn {
+  flex: 1 1 0 !important;
+  max-width: 128px !important;
+  justify-content: center !important;
+  padding: 11px 8px !important;
+  font-family: 'Noto Serif KR', serif !important;
+  font-size: 0.8rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.02em !important;
+  color: #6d5c4b !important;
+  background: #fffdf9 !important;
+  border: 1px solid rgba(172, 146, 106, 0.32) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+
+/* ======================================================
+   SHARE SECTION — 최하단 주소 복사 · 카카오톡 공유
+   ====================================================== */
+.share-section {
+  padding: 10px 24px 46px !important;
+  background: #FFFFFC !important;
+  text-align: center;
+}
+
+.share-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1 1 0;
+  max-width: 190px;
+  padding: 13px 14px;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #6d5c4b;
+  background: #fffdf9;
+  border: 1px solid rgba(172, 146, 106, 0.32);
+  border-radius: 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.share-btn:active {
+  background: rgba(172, 146, 106, 0.12);
+}
+
+.share-btn svg {
+  opacity: 0.75;
+}
+
+/* ======================================================
+   ACCOUNT 아코디언 — 청첩장 톤(크림·골드브라운)으로 통일
+   ====================================================== */
+.account__subtitle {
+  font-family: 'Noto Serif KR', serif !important;
+  font-weight: 300 !important;
+  color: rgba(109, 92, 75, 0.75) !important;
+  letter-spacing: 0.04em !important;
+}
+
+.accordion {
+  border: 1px solid rgba(172, 146, 106, 0.28) !important;
+  border-radius: 4px !important;
+  background: #fffdf9 !important;
+  box-shadow: none !important;
+}
+
+.accordion__toggle {
+  font-family: 'Noto Serif KR', serif !important;
+  font-size: 0.86rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.04em !important;
+  color: #5a534b !important;
+}
+
+.accordion__toggle:hover {
+  background: rgba(172, 146, 106, 0.07) !important;
+}
+
+.accordion__arrow {
+  color: rgba(172, 146, 106, 0.85) !important;
+}
+
+.account-item {
+  border-top: 1px solid rgba(172, 146, 106, 0.16) !important;
+}
+
+.account-item__role {
+  color: rgba(139, 122, 101, 0.8) !important;
+  font-family: 'Noto Serif KR', serif !important;
+}
+
+.account-item__detail {
+  color: #55504a !important;
+  font-family: 'Noto Serif KR', serif !important;
+}
+
+.account-item__copy {
+  border: 1px solid rgba(172, 146, 106, 0.45) !important;
+  color: #8a7a5f !important;
+  background: transparent !important;
+  border-radius: 999px !important;
+  font-family: 'Noto Serif KR', serif !important;
+}
+
+.account-item__copy:hover,
+.account-item__copy:active {
+  background: #a68a60 !important;
+  border-color: #a68a60 !important;
+  color: #fff !important;
+}
+
+/* ======================================================
+   FOOTER — 사진 위쪽을 페이지 톤으로 부드럽게 블렌딩
+   ====================================================== */
+.thankyou-photo {
+  position: relative !important;
+}
+
+.thankyou-photo::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 30% !important;
+  background: linear-gradient(180deg, #FFFFFC 0%, rgba(255, 255, 252, 0) 100%) !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+
+.thankyou-photo img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+
+/* ======================================================
+   페이지 가로 넘침 잠금 — 갤러리 100vw로 인해 본문 전체가
+   가로 스크롤되던 문제 해결 (이게 원인이었습니다)
+   ====================================================== */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+}
+
+.invitation {
+  overflow-x: clip !important;
+}
+
+#gallery {
+  overflow: hidden !important;
+}
+
+/* ======================================================
+   GALLERY v22 — 필름 스트립 디자인
+   위아래 필름 퍼포레이션(구멍) + 스트립 밴드, 사진은
+   잘리지 않게(contain) 통일 프레임에 담습니다.
+   ====================================================== */
+#gallery-grid .gallery__scroller {
+  position: relative !important;
+  background: #efe9dd !important;
+  padding: 34px calc(50vw - min(24vw, 105px)) 34px !important;
+  touch-action: pan-x pan-y !important;
+}
+
+/* 필름 구멍 (위/아래 퍼포레이션) */
+#gallery-grid .gallery__scroller::before,
+#gallery-grid .gallery__scroller::after {
+  content: '' !important;
+  position: absolute !important;
+  left: 0 !important;
+  height: 12px !important;
+  /* 스크롤 내용 전체 폭을 덮도록 충분히 길게 */
+  width: max(400vw, 4000px) !important;
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 252, 0.92) 0 14px,
+    transparent 14px 34px
+  ) !important;
+  border-radius: 2px !important;
+  pointer-events: none !important;
+}
+
+#gallery-grid .gallery__scroller::before { top: 11px !important; }
+#gallery-grid .gallery__scroller::after  { bottom: 11px !important; }
+
+#gallery-grid .gallery__cell {
+  width: min(48vw, 210px) !important;
+  aspect-ratio: 3 / 4 !important;
+  border-radius: 2px !important;
+  background: #fffef9 !important;
+  box-shadow: 0 1px 4px rgba(76, 62, 48, 0.08) !important;
+}
+
+#gallery-grid .gallery__cell img {
+  object-fit: contain !important;   /* 가로 사진도 잘리지 않게 */
+  object-position: center !important;
+}
+
+#gallery-grid .gallery__scroller::before,
+#gallery-grid .gallery__scroller::after {
+  width: 9999px !important;   /* 사진이 많아도 구멍이 끝까지 이어지게 */
+}
+
+/* ======================================================
+   자필 편지 — 심플 & 은은 (테이프/기울임 제거)
+   ====================================================== */
+.story-letter:nth-child(odd),
+.story-letter:nth-child(even) {
+  transform: none;
+}
+
+.story-letter__paper {
+  padding: 26px 20px;
+  border: 1px solid rgba(172, 146, 106, 0.18);
+  box-shadow: 0 6px 18px rgba(76, 62, 48, 0.05);
+}
+
+.story-letter__paper::before {
+  content: none;
+  display: none;
+}
+
+.story-letter__caption {
+  margin-top: 12px;
+}
+
+.story-letter__year {
+  font-size: 0.85rem;
+  color: rgba(166, 138, 96, 0.7);
+}
+
+.story-letter__from {
+  font-size: 0.74rem;
+  color: rgba(90, 83, 75, 0.6);
+}
+
+/* ── 이야기 → 티켓이 한 흐름으로 이어지게 ── */
+.story {
+  padding-bottom: 26px !important;
+}
+
+.ticket-section {
+  padding-top: 6px !important;
+  padding-bottom: 54px !important;
+}
+
+/* 편지와 티켓 사이 가는 세로 연결선 */
+.ticket-section .section__inner::before {
+  content: '';
+  display: block;
+  width: 1px;
+  height: 34px;
+  margin: 0 auto 22px;
+  background: linear-gradient(180deg, rgba(172,146,106,0), rgba(172,146,106,0.4), rgba(172,146,106,0));
+}
+
+/* ======================================================
+   버튼 전체 옅게 — 지도3버튼 / 공유2버튼 / 계좌 복사
+   ====================================================== */
+.location__buttons.location__buttons--maps .btn {
+  color: rgba(109, 92, 75, 0.66) !important;
+  background: transparent !important;
+  border: 1px solid rgba(172, 146, 106, 0.2) !important;
+}
+
+.share-btn {
+  color: rgba(109, 92, 75, 0.66) !important;
+  background: transparent !important;
+  border: 1px solid rgba(172, 146, 106, 0.2) !important;
+}
+
+.share-btn svg { opacity: 0.5; }
+
+.account-item__copy {
+  border: 1px solid rgba(172, 146, 106, 0.28) !important;
+  color: rgba(138, 122, 95, 0.75) !important;
+}
+
+.accordion {
+  border: 1px solid rgba(172, 146, 106, 0.2) !important;
+}
+
+/* ======================================================
+   TRANSPORT 접이식 — 소제목 클릭 시 내용 펼침
+   ====================================================== */
+.location-transport__block {
+  margin-bottom: 10px !important;
+  border-bottom: 1px solid rgba(172, 146, 106, 0.16) !important;
+}
+
+.location-transport__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 13px 2px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 0.84rem;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: rgba(109, 92, 75, 0.85);
+  text-align: left;
+}
+
+.location-transport__chevron {
+  flex: 0 0 auto;
+  margin-left: 10px;
+  color: rgba(172, 146, 106, 0.6);
+  transition: transform 0.3s ease;
+}
+
+.location-transport__block.is-open .location-transport__chevron {
+  transform: rotate(180deg);
+}
+
+.location-transport__panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.38s ease;
+}
+
+.location-transport__block.is-open .location-transport__panel {
+  max-height: 400px;
+}
+
+.location-transport__panel-inner {
+  padding: 2px 2px 16px;
+}
+
+/* 기존 밑줄형 헤딩 스타일은 접이식으로 대체 */
+.location-transport__heading {
+  border-bottom: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 티켓 힌트 중앙 정렬 보정 */
+.ticket-section .section__inner,
+.ticket-hint {
+  text-align: center !important;
+}
+
+
+/* ======================================================
+   GALLERY v23 — 진짜 검정 필름 스트립
+   무한 순환 스와이프 + 4초 자동 이동, 사진은 잘리지 않고
+   가로 사진의 위아래 여백도 검정으로 통일됩니다.
+   (이전 gallery__scroller/__cell/__viewport 블록은 클래스가
+    달라 더 이상 적용되지 않습니다.)
+   ====================================================== */
+#gallery-grid.gallery__grid {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: calc(50% - 50vw) !important;
+  margin-right: calc(50% - 50vw) !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+#gallery-grid .gallery__film {
+  position: relative !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  background: #0d0d0d !important;           /* 검정 필름 */
+  padding: 0 !important;
+  touch-action: pan-y !important;           /* 가로 제스처는 JS가 처리 */
+  cursor: grab !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+#gallery-grid .gallery__film:active { cursor: grabbing !important; }
+
+#gallery-grid .gallery__track {
+  display: flex !important;
+  gap: 6px !important;                       /* 프레임 사이 얇은 검정 간격 */
+  will-change: transform !important;
+  backface-visibility: hidden !important;
+  align-items: stretch !important;
+}
+
+/* 프레임 = [상단 필름 마킹] + [사진] + [하단 필름 마킹] */
+#gallery-grid .gallery__frame {
+  flex: 0 0 auto !important;
+  width: min(56vw, 232px) !important;
+  background: transparent !important;
+  display: flex !important;
+  flex-direction: column !important;
+  cursor: pointer !important;
+}
+
+/* 사진 영역 — 세로 3:4, 가로 사진은 위아래 검정 레터박스 */
+#gallery-grid .gallery__shot {
+  width: 100% !important;
+  aspect-ratio: 3 / 4 !important;
+  background: #000000 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+#gallery-grid .gallery__shot img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;           /* 잘리지 않게 전체 표시 */
+  object-position: center !important;
+  display: block !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  pointer-events: none !important;
+}
+
+/* 필름 가장자리 인쇄 문구(프레임 번호 / 브랜드) */
+#gallery-grid .gallery__mark {
+  display: block !important;
+  height: 26px !important;
+  line-height: 26px !important;
+  padding: 0 10px !important;
+  font-family: 'Courier New', ui-monospace, monospace !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.18em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  pointer-events: none !important;
+}
+
+#gallery-grid .gallery__mark--top {
+  color: rgba(236, 233, 226, 0.92) !important;   /* 상단: 밝은 회백색 */
+  text-align: left !important;
+}
+
+#gallery-grid .gallery__mark--bot {
+  color: rgba(224, 168, 74, 0.92) !important;     /* 하단: 필름 특유의 앰버(주황) */
+  text-align: left !important;
+  transform: rotate(180deg) !important;           /* 반대편 가장자리처럼 뒤집힘 */
+}
+
+#gallery-grid .gallery__counter { display: none !important; }
+
+
+/* ── 지도 임베드 ── */
+.location__map-wrap {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(172, 146, 106, 0.22);
+  background: #f3f0ea;                 /* 로딩 중 흰 화면 방지 */
+  line-height: 0;
+}
+
+.loc-map-frame {
+  width: 100%;
+  height: 260px;
+  border: 0;
+  display: block;
+}
+
+/* 네이버 지도가 렌더링될 때 내부 div가 래퍼 크기를 100% 채우도록 보장 */
+.location__map-wrap > div.loc-map-loading {
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: 'Noto Serif KR', serif !important;
+  font-size: 0.8rem !important;
+  line-height: 1.4 !important;
+  letter-spacing: 0.02em !important;
+  color: rgba(120, 110, 98, 0.6) !important;
+}
+
+/* 네이버 지도 컨테이너(div)는 래퍼를 꽉 채움 */
+.location__map-wrap > div:not(.loc-map-loading) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── Celebration 문구 ── */
+.account__subtitle {
+  line-height: 1.75 !important;
+  font-size: 0.86rem !important;
+}
+
+/* ── 하단 공유 버튼: 더 작고 은은하게 ── */
+.share-section {
+  padding: 4px 24px 40px !important;
+}
+
+.share-buttons {
+  gap: 8px;
+  max-width: 320px;
+}
+
+.share-btn {
+  flex: 0 1 auto;
+  max-width: none;
+  padding: 8px 14px !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.01em !important;
+  color: rgba(120, 108, 94, 0.6) !important;
+  border: 1px solid rgba(172, 146, 106, 0.16) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+}
+
+.share-btn svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.45;
+}
+
+
+/* ======================================================
+   OUR DAY — D-day 큰 숫자 (달력에 종속되되 또렷하게)
+   작은 DAYS/HOURS/MIN/SEC 박스는 감추고 D-95를 focal point로.
+   ====================================================== */
+.calendar-section .our-day-countdown .countdown__item {
+  display: none !important;      /* 4개 박스 완전히 숨김 */
+}
+
+.our-day-dday {
+  grid-column: 1 / -1 !important;
+  order: 5 !important;
+  margin: 2px 0 0 !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  font-family: 'Cormorant Garamond', 'Ortica Linear', serif !important;
+  color: #b0895a !important;                 /* 웜 골드 — 테마와 조화 */
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 1px !important;
+}
+
+.our-day-dday__prefix {
+  font-size: 1.7rem !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.02em !important;
+  opacity: 0.9 !important;
+}
+
+.our-day-dday__num {
+  font-size: 3.2rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+}
+
+.calendar-section .our-day-countdown .our-day-countdown__message,
+.our-day-countdown__message {
+  order: 20 !important;
+  margin: 14px 0 0 !important;
+  font-size: 0.8rem !important;
+  color: rgba(90, 84, 78, 0.66) !important;
+}
+
+/* D-day가 이미 크게 보이므로 문장 속 '95일'은 은은하게 */
+.our-day-countdown__message strong {
+  color: #a98a5e !important;
+  font-weight: 500 !important;
+  font-size: 0.86rem !important;
+  margin: 0 2px !important;
+}
+
+@media (max-width: 360px) {
+  .our-day-dday__num { font-size: 2.9rem !important; }
+  .our-day-dday__prefix { font-size: 1.5rem !important; }
+}

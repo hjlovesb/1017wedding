@@ -42,7 +42,7 @@
 
   <div class="curtain__content">
     <p class="curtain__hint">
-      <span class="curtain__hint-kr">봉투를 열어보세요</span>
+      <span class="curtain__hint-kr">청첩장 열기</span>
     </p>
   </div>
 </div>
@@ -119,21 +119,34 @@
         <h2 class="section__title script-font" id="story-title"></h2>
         <p class="story__text" id="story-text"></p>
       </div>
-      <div class="story__images" id="story-images">
-        <div class="story-envelope-slide" id="story-envelope-slide" aria-label="봉투 안 사진이 스르륵 올라오는 우리의 이야기">
-          <div class="story-envelope-slide__stage">
-            <img class="story-envelope-slide__base" src="images/story/00.png" alt="봉투 첫 장면" loading="lazy" decoding="async" />
-            <div class="story-envelope-slide__card" aria-hidden="true">
-              <img class="story-envelope-slide__photo is-active" src="images/story/01.png" alt="" loading="lazy" decoding="async" data-story-photo="0" />
-              <img class="story-envelope-slide__photo" src="images/story/02.png" alt="" loading="lazy" decoding="async" data-story-photo="1" />
-              <img class="story-envelope-slide__photo" src="images/story/03.png" alt="" loading="lazy" decoding="async" data-story-photo="2" />
-              <img class="story-envelope-slide__photo" src="images/story/04.png" alt="" loading="lazy" decoding="async" data-story-photo="3" />
-            </div>
-            <img class="story-envelope-slide__front" src="images/story/front-envelope-overlay.png" alt="" loading="lazy" decoding="async" aria-hidden="true" />
+      <div class="story__letters" id="story-letters">
+        <figure class="story-letter anim-target">
+          <div class="story-letter__paper">
+            <img src="images/letters/1.png" alt="2024년, 상빈이 현준에게 쓴 첫 편지" loading="lazy" decoding="async" />
+          </div>
+        </figure>
+        <figure class="story-letter anim-target">
+          <div class="story-letter__paper">
+            <img src="images/letters/2.png" alt="2025년, 현준이 상빈에게 쓴 편지" loading="lazy" decoding="async" />
+          </div>
+        </figure>
+      </div>
+      <div class="floral-divider"></div>
+    </section>
+
+    <!-- ── Wedding Ticket ── -->
+    <section class="section ticket-section" id="ticket">
+      <div class="section__inner anim-target">
+        <p class="ticket-hint" aria-hidden="true">
+          <span class="ticket-hint__bubble">티켓을 눌러보세요</span>
+        </p>
+        <div class="ticket-flip" id="ticket-flip" role="button" tabindex="0" aria-label="웨딩 티켓 — 누르면 뒤집힙니다">
+          <div class="ticket-flip__inner">
+            <img class="ticket-flip__face ticket-flip__front" src="images/ticket/front.png" alt="웨딩 티켓 앞면" loading="lazy" decoding="async" />
+            <img class="ticket-flip__face ticket-flip__back" src="images/ticket/back.png" alt="웨딩 티켓 뒷면" loading="lazy" decoding="async" />
           </div>
         </div>
       </div>
-      <div class="floral-divider"></div>
     </section>
 
     <!-- ── Gallery ── -->
@@ -153,15 +166,9 @@
         <p class="location__hall" id="loc-hall"></p>
         <p class="location__address" id="loc-address"></p>
         <p class="location__tel" id="loc-tel"></p>
-        <div class="location__map-wrap">
-          <img id="loc-map-img" src="images/location/1.png" alt="오시는 길 약도" loading="lazy" />
-        </div>
+        <div class="location__map-wrap" id="loc-map-wrap"></div>
 
-        <div class="location__buttons">
-          <button class="btn btn--rose" id="btn-copy-address">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            주소 복사
-          </button>
+        <div class="location__buttons location__buttons--maps">
           <a class="btn btn--outline" id="btn-kakao-map" href="" target="_blank" rel="noopener">
             카카오맵
           </a>
@@ -180,7 +187,7 @@
     <section class="section account" id="account">
       <div class="section__inner anim-target">
         <h2 class="section__title script-font">Celebration</h2>
-        <p class="account__subtitle">축하의 마음을 전해주세요</p>
+        <p class="account__subtitle">전해주시는 축하의 마음,<br />감사히 간직하며 행복하게 살아가겠습니다.</p>
 
         <!-- 신랑측 -->
         <div class="accordion" id="acc-groom">
@@ -198,6 +205,22 @@
             <svg class="accordion__arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="accordion__body" id="acc-bride-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Share (최하단: 주소 복사 · 카카오톡 공유) ── -->
+    <section class="section share-section" id="share">
+      <div class="section__inner anim-target">
+        <div class="share-buttons">
+          <button class="share-btn" id="btn-copy-address-bottom" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            주소 복사
+          </button>
+          <button class="share-btn" id="btn-kakao-share" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.54 2 10.9c0 2.8 1.86 5.26 4.66 6.66-.15.52-.96 3.32-.99 3.54 0 0-.02.17.09.23.11.07.24.02.24.02.32-.05 3.66-2.4 4.24-2.81.57.08 1.16.13 1.76.13 5.52 0 10-3.54 10-7.9S17.52 3 12 3z"/></svg>
+            카카오톡 공유하기
+          </button>
         </div>
       </div>
     </section>

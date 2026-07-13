@@ -468,99 +468,25 @@ function initCalendar() {
     update();
     setInterval(update, 1000);
   }
-  /* ── Story: 봉투에서 나온 뒤 01~04 사진이 자동으로 순환 ── */
-  function startStoryPhotoCycle(reveal) {
-    const card = reveal.querySelector('.story-envelope-slide__card');
-    if (!card) return;
-
-    const photos = Array.from(card.querySelectorAll('.story-envelope-slide__photo'));
-    if (photos.length <= 1) return;
-
-    const prefersReducedMotion =
-      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return; // 첫 사진(01)만 정지 상태로 보여주고 순환은 건너뜀
-
-    let index = Math.max(0, photos.findIndex((p) => p.classList.contains('is-active')));
-
-    function showNext() {
-      const nextIndex = (index + 1) % photos.length;
-      photos[index].classList.remove('is-active');
-      photos[nextIndex].classList.add('is-active');
-      index = nextIndex;
-    }
-
-    function loop() {
-      showNext();
-      window.setTimeout(loop, 3200);
-    }
-
-    // 봉투에서 카드가 스르륵 올라오는 연출이 끝난 뒤 사진 순환을 시작합니다.
-    const riseDelayMs = window.matchMedia('(max-width: 480px)').matches ? 6300 : 6650;
-    window.setTimeout(loop, riseDelayMs);
-  }
-
+  /* ── Story: 자필 편지 ── */
   async function initStory() {
     const title = $('#story-title');
     const text = $('#story-text');
-    const container = $('#story-images');
 
     if (title) title.textContent = CONFIG.story.title;
     if (text) text.textContent = CONFIG.story.content;
-    if (!container) return;
 
-    const reveal = container.querySelector('#story-envelope-slide');
-    if (!reveal) return;
-
-    const images = Array.from(reveal.querySelectorAll('img'));
-    // 이미지를 완전히 '디코드'까지 끝낸 뒤 모션을 시작해 첫 프레임 끊김을 방지합니다.
-    await Promise.all(images.map(async (img) => {
-      try {
-        if (typeof img.decode === 'function') {
-          await img.decode();
-          return;
-        }
-      } catch (e) {}
-      if (img.complete) return;
-      await new Promise((resolve) => {
-        img.addEventListener('load', resolve, { once: true });
-        img.addEventListener('error', resolve, { once: true });
-      });
-    }));
-
-    let cycleStarted = false;
-    const play = () => {
-      reveal.classList.remove('is-playing');
-      void reveal.offsetWidth;
-      reveal.classList.add('is-visible', 'is-playing');
-
-      if (!cycleStarted) {
-        cycleStarted = true;
-        startStoryPhotoCycle(reveal);
+    // 편지 이미지가 없으면 해당 카드는 조용히 숨깁니다.
+    $$('.story-letter img').forEach((img) => {
+      img.addEventListener('error', () => {
+        const fig = img.closest('.story-letter');
+        if (fig) fig.style.display = 'none';
+      }, { once: true });
+      if (img.complete && img.naturalWidth === 0 && img.src) {
+        const fig = img.closest('.story-letter');
+        if (fig) fig.style.display = 'none';
       }
-    };
-
-    if ('IntersectionObserver' in window) {
-      const storyObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            play();
-            storyObserver.unobserve(entry.target);
-          }
-        });
-      }, { threshold: 0.22, rootMargin: '0px 0px -8% 0px' });
-      storyObserver.observe(reveal);
-    } else {
-      play();
-    }
-
-    // 안전장치: 화면에 실제로 보일 때만 재생을 시작합니다.
-    const fallbackCheck = () => {
-      if (reveal.classList.contains('is-playing')) return;
-      const rect = reveal.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      if (rect.top < vh * 0.85 && rect.bottom > 0) play();
-    };
-    window.setTimeout(fallbackCheck, 1200);
+    });
   }
 
 
@@ -600,202 +526,307 @@ function initCalendar() {
 
  function initGallerySlider() {
   const gallery = document.querySelector('#gallery-grid');
-  if (!gallery) return;
+  if (!gallery || !galleryImages.length) return;
 
-  const originalItems = Array.from(gallery.querySelectorAll('.gallery__item'));
-  if (!originalItems.length) return;
+  const N = galleryImages.length;
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 진짜 필름처럼 "끊김 없이 물 흐르듯" 연속으로 흘러가게 하기 위해,
+  // 사진 세트를 여러 번 이어 붙이고 한 세트 폭만큼 지나가면 살짝 되감아
+  // 이음매가 보이지 않게 순환합니다. (스텝 단위 점프가 없어 뚝 끊기지 않음)
+  const COPIES = Math.max(3, Math.ceil(10 / N) + 1);
+  const seq = [];
+  for (let c = 0; c < COPIES; c++) {
+    for (let i = 0; i < N; i++) seq.push(i);
+  }
+
+  // 실제 35mm 필름 가장자리 인쇄처럼, 각 프레임 위/아래에 필름 마킹을 넣습니다.
+  const BRAND = '1017 FILM';
+  const seqHtml = seq.map((real, k) => {
+    const code = `${String(real + 1).padStart(2, '0')}${k % 2 ? 'A' : ''}`;
+    const top = (k % 3 === 1) ? BRAND : code;          // 코드/브랜드 번갈아
+    return `
+      <div class="gallery__frame" data-real="${real}">
+        <span class="gallery__mark gallery__mark--top">${top}</span>
+        <div class="gallery__shot">
+          <img src="${galleryImages[real]}" alt="갤러리 사진 ${real + 1}" loading="lazy" decoding="async" draggable="false" />
+        </div>
+        <span class="gallery__mark gallery__mark--bot">${code}</span>
+      </div>`;
+  }).join('');
 
   gallery.innerHTML = `
-    <div class="gallery__viewport">
-      <div class="gallery__track"></div>
+    <div class="gallery__film" aria-label="갤러리 필름">
+      <div class="gallery__track">
+        ${seqHtml}
+      </div>
     </div>
-    <div class="gallery__counter" aria-live="polite"></div>
   `;
 
-  const viewport = gallery.querySelector('.gallery__viewport');
+  const film = gallery.querySelector('.gallery__film');
   const track = gallery.querySelector('.gallery__track');
-  const counter = gallery.querySelector('.gallery__counter');
+  const frames = Array.from(track.children);
 
-  const prepareItem = (item) => {
-    item.removeAttribute('onclick');
-    const img = item.querySelector('img');
-    if (img) {
-      img.removeAttribute('onclick');
-      img.style.pointerEvents = 'none';
-      img.setAttribute('draggable', 'false');
+  const SPEED = 42;            // px/초 — 잔잔하게 흐르는 속도
+  let x = 0;                   // 현재 트랙 위치(px)
+  let setWidth = 0;            // 사진 한 세트의 폭(px) — 되감기 기준
+  let rafId = null;
+  let lastT = null;
+  let inView = true;
+  let paused = false;          // 라이트박스 열림 등으로 일시정지
+
+  function frameStep() {
+    const f = frames[0];
+    if (!f) return 0;
+    const gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || '0') || 0;
+    return f.getBoundingClientRect().width + gap;
+  }
+
+  function measure() {
+    setWidth = frameStep() * N;   // 한 세트 폭
+    wrap();
+    apply();
+  }
+
+  function wrap() {
+    if (setWidth <= 0) return;
+    // x는 항상 (-setWidth, 0] 범위 안에 있도록 유지 → 이음매 없이 순환
+    while (x <= -setWidth) x += setWidth;
+    while (x > 0) x -= setWidth;
+  }
+
+  function apply() {
+    track.style.transform = `translate3d(${x}px, 0, 0)`;
+  }
+
+  function tick(t) {
+    if (lastT == null) lastT = t;
+    const dt = Math.min(0.05, (t - lastT) / 1000); // 탭 전환 후 큰 점프 방지
+    lastT = t;
+    if (!paused && !dragging && inView && !prefersReduced) {
+      x -= SPEED * dt;
+      wrap();
+      apply();
     }
-    return item;
-  };
-
-  originalItems.forEach((item) => track.appendChild(prepareItem(item)));
-
-  const loopEnabled = originalItems.length > 1;
-  // 앞뒤 복제 슬라이드로 첫 장과 마지막 장 사이도 끊김 없이 순환합니다.
-  if (loopEnabled) {
-    track.insertBefore(prepareItem(originalItems[originalItems.length - 1].cloneNode(true)), track.firstChild);
-    track.appendChild(prepareItem(originalItems[0].cloneNode(true)));
+    rafId = requestAnimationFrame(tick);
   }
 
-  const slides = Array.from(track.children);
-  let index = loopEnabled ? 1 : 0;
+  /* ── 손가락을 그대로 따라오는 드래그(스크럽) ── */
+  let dragging = false, decided = false, horizontal = false;
+  let sx = 0, sy = 0, startX = 0, moved = false;
+
+  function down(px, py) {
+    dragging = true; decided = false; horizontal = false; moved = false;
+    sx = px; sy = py;
+    startX = x;
+  }
+  function moveHandler(px, py, ev) {
+    if (!dragging) return;
+    const dx = px - sx, dy = py - sy;
+    if (!decided) {
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+      horizontal = Math.abs(dx) > Math.abs(dy);
+      decided = true;
+      if (!horizontal) { dragging = false; return; } // 세로 → 페이지 스크롤 양보
+    }
+    if (Math.abs(dx) > 4) moved = true;
+    if (horizontal && ev && ev.cancelable) ev.preventDefault();
+    x = startX + dx;
+    wrap();
+    apply();
+  }
+  function up() {
+    if (!dragging) return;
+    dragging = false;
+    lastT = null; // 이어서 연속 흐름 재개 시 dt 튐 방지
+  }
+
+  film.addEventListener('touchstart', (e) => { if (e.touches[0]) down(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  film.addEventListener('touchmove', (e) => { if (e.touches[0]) moveHandler(e.touches[0].clientX, e.touches[0].clientY, e); }, { passive: false });
+  film.addEventListener('touchend', up);
+  film.addEventListener('touchcancel', up);
+  film.addEventListener('mousedown', (e) => { down(e.clientX, e.clientY); e.preventDefault(); });
+  window.addEventListener('mousemove', (e) => { if (dragging) moveHandler(e.clientX, e.clientY, e); });
+  window.addEventListener('mouseup', up);
+
+  // 탭(드래그 아님) → 확대 보기
+  film.addEventListener('click', (e) => {
+    if (moved) return; // 스와이프였으면 무시
+    const frame = e.target.closest('.gallery__frame');
+    if (frame && typeof window.__openGalleryViewer === 'function') {
+      window.__openGalleryViewer(Number(frame.dataset.real) || 0);
+    }
+  });
+
+  // 라이트박스가 열려 있으면 흐름 정지
+  function syncPaused() {
+    const v = document.getElementById('viewer');
+    paused = !!(v && v.classList.contains('is-active'));
+  }
+  document.addEventListener('click', syncPaused, true);
+  window.addEventListener('gallery:viewer', syncPaused);
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver((entries) => {
+      entries.forEach((en) => { inView = en.isIntersecting; });
+    }, { threshold: 0.05 }).observe(film);
+  }
+
+  window.addEventListener('resize', measure, { passive: true });
+
+  // 이미지 로드 후 정확히 재측정
+  const imgs = Array.from(track.querySelectorAll('img'));
+  Promise.all(imgs.map((im) => (im.complete && im.naturalWidth)
+    ? Promise.resolve()
+    : new Promise((r) => { im.addEventListener('load', r, { once: true }); im.addEventListener('error', r, { once: true }); })
+  )).then(measure);
+
+  measure();
+  rafId = requestAnimationFrame(tick);
+}
+
+/* ── 사진 확대 보기 (라이트박스) ── */
+function initViewer() {
+  const viewer = document.getElementById('viewer');
+  const track = document.getElementById('viewer-track');
+  const closeBtn = document.getElementById('viewer-close');
+  const counter = document.getElementById('viewer-counter');
+  const prevBtn = document.getElementById('viewer-prev');
+  const nextBtn = document.getElementById('viewer-next');
+  if (!viewer || !track) return;
+
+  let built = false;
+  let index = 0;
   let width = 0;
-  let animating = false;
 
-  const EASE = 'cubic-bezier(0.22, 0.61, 0.36, 1)';
-
-  function realIndex() {
-    if (!loopEnabled) return 0;
-    if (index === 0) return originalItems.length - 1;
-    if (index === slides.length - 1) return 0;
-    return index - 1;
-  }
-
-  function updateCounter() {
-    counter.textContent = `${realIndex() + 1} / ${originalItems.length}`;
-  }
-
-  function activeImg() {
-    const slide = slides[index];
-    return slide ? slide.querySelector('img') : null;
-  }
-
-  // 현재 사진의 실제 높이에 맞춰 갤러리 높이를 부드럽게 조정 (가로/세로 사진 대응)
-  function syncHeight(animate) {
-    const img = activeImg();
-    if (!img) return;
-    const apply = () => {
-      const h = img.clientHeight ||
-        (img.naturalWidth ? width * (img.naturalHeight / img.naturalWidth) : 0);
-      if (!h) return;
-      // 인라인 !important 로 지정해야 스타일시트의 height:auto !important 를 이깁니다.
-      viewport.style.setProperty('transition', animate ? `height 0.45s ${EASE}` : 'none', 'important');
-      viewport.style.setProperty('height', `${Math.round(h)}px`, 'important');
-    };
-    if (img.complete && img.naturalWidth) apply();
-    else img.addEventListener('load', apply, { once: true });
+  function build() {
+    if (built || !galleryImages.length) return;
+    built = true;
+    track.innerHTML = galleryImages
+      .map((src) => `<div class="viewer__slide"><img src="${src}" alt="" draggable="false" /></div>`)
+      .join('');
   }
 
   function setX(x, animate) {
-    track.style.transition = animate ? `transform 0.5s ${EASE}` : 'none';
+    track.style.transition = animate ? 'transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none';
     track.style.transform = `translate3d(${x}px, 0, 0)`;
   }
 
   function snap(animate) {
+    width = viewer.clientWidth || window.innerWidth;
     setX(-index * width, animate);
-    updateCounter();
-    syncHeight(animate);
+    if (counter) counter.textContent = `${index + 1} / ${galleryImages.length}`;
   }
 
-  function measure() {
-    width = viewport.clientWidth || gallery.clientWidth || 1;
-    slides.forEach((slide) => { slide.style.width = `${width}px`; });
+  let openedAt = 0;
+
+  function open(startIndex) {
+    build();
+    if (!built) return;
+    index = Math.max(0, Math.min(galleryImages.length - 1, startIndex || 0));
+    openedAt = Date.now();
+    viewer.classList.add('is-active');
+    viewer.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
     snap(false);
   }
 
-  track.addEventListener('transitionend', (event) => {
-    if (event.propertyName !== 'transform') return;
-    animating = false;
-    // 복제 슬라이드에 도착하면 같은 실제 슬라이드로 순간 이동해 무한 루프를 만듭니다.
-    if (loopEnabled) {
-      if (index === 0) { index = originalItems.length; snap(false); }
-      else if (index === slides.length - 1) { index = 1; snap(false); }
-    }
-  });
-
-  /* ── 손가락을 그대로 따라오는 드래그 (touch + mouse) ── */
-  let dragging = false;
-  let decided = false;
-  let horizontal = false;
-  let startX = 0, startY = 0, lastX = 0, baseX = 0, startTime = 0;
-
-  function down(x, y) {
-    if (!loopEnabled || animating) return;
-    dragging = true;
-    decided = false;
-    horizontal = false;
-    startX = lastX = x;
-    startY = y;
-    baseX = -index * width;
-    startTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-    track.style.transition = 'none';
-    viewport.classList.add('is-dragging');
+  function close() {
+    // 갤러리 탭 직후 따라오는 고스트 클릭이 뷰어를 곧바로 닫는 것 방지
+    if (Date.now() - openedAt < 500) return;
+    viewer.classList.remove('is-active');
+    viewer.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
   }
 
-  function move(x, y, ev) {
-    if (!dragging) return;
-    const dx = x - startX;
-    const dy = y - startY;
+  function go(dir) {
+    index = (index + dir + galleryImages.length) % galleryImages.length;
+    snap(true);
+  }
 
+  window.__openGalleryViewer = open;
+
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  const backdrop = viewer.querySelector('.viewer__backdrop');
+  if (backdrop) backdrop.addEventListener('click', close);
+  if (prevBtn) prevBtn.addEventListener('click', () => go(-1));
+  if (nextBtn) nextBtn.addEventListener('click', () => go(1));
+  document.addEventListener('keydown', (e) => {
+    if (!viewer.classList.contains('is-active')) return;
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft') go(-1);
+    if (e.key === 'ArrowRight') go(1);
+  });
+
+  // 확대 화면에서도 손가락 스와이프로 넘기기
+  let startX = 0, startY = 0, lastX = 0, dragging = false, horizontal = false, decided = false;
+  track.addEventListener('touchstart', (e) => {
+    if (!e.touches[0]) return;
+    dragging = true; decided = false; horizontal = false;
+    startX = lastX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    track.style.transition = 'none';
+  }, { passive: true });
+  track.addEventListener('touchmove', (e) => {
+    if (!dragging || !e.touches[0]) return;
+    const x = e.touches[0].clientX;
+    const dx = x - startX;
+    const dy = e.touches[0].clientY - startY;
     if (!decided) {
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
       horizontal = Math.abs(dx) > Math.abs(dy);
       decided = true;
-      if (!horizontal) { // 세로 제스처 → 페이지 스크롤에 양보
-        dragging = false;
-        viewport.classList.remove('is-dragging');
-        return;
-      }
     }
-
-    if (horizontal && ev && ev.cancelable) ev.preventDefault();
+    if (!horizontal) return;
+    if (e.cancelable) e.preventDefault();
     lastX = x;
-    setX(baseX + dx, false); // 손가락을 1:1로 따라옴
-  }
-
-  function up() {
+    setX(-index * width + dx, false);
+  }, { passive: false });
+  track.addEventListener('touchend', () => {
     if (!dragging) return;
     dragging = false;
-    viewport.classList.remove('is-dragging');
-    if (!horizontal) return;
-
+    if (!horizontal) { snap(false); return; }
     const dx = lastX - startX;
-    const elapsed = Math.max(1, (typeof performance !== 'undefined' ? performance.now() : Date.now()) - startTime);
-    const velocity = dx / elapsed;
+    if (Math.abs(dx) > width * 0.15) go(dx < 0 ? 1 : -1);
+    else snap(true);
+  });
 
-    // 짧고 빠르게 밀어도(속도) 또는 충분히 밀면(거리) 다음 장으로
-    if (Math.abs(dx) > width * 0.16 || Math.abs(velocity) > 0.4) {
-      index += dx < 0 ? 1 : -1;
-    }
-    animating = true;
-    snap(true);
-    // 위치 변화가 없어 transitionend가 안 뜨는 경우(정확히 제자리) 대비
-    window.setTimeout(() => { animating = false; }, 600);
-  }
-
-  // Touch (모바일)
-  viewport.addEventListener('touchstart', (e) => {
-    if (!e.touches[0]) return;
-    down(e.touches[0].clientX, e.touches[0].clientY);
+  window.addEventListener('resize', () => {
+    if (viewer.classList.contains('is-active')) snap(false);
   }, { passive: true });
-  viewport.addEventListener('touchmove', (e) => {
-    if (!e.touches[0]) return;
-    move(e.touches[0].clientX, e.touches[0].clientY, e);
+
+  // 확대 화면에서는 더 이상 확대되지 않도록 잠급니다 (핀치/더블탭 차단)
+  viewer.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1 && e.cancelable) e.preventDefault();
   }, { passive: false });
-  viewport.addEventListener('touchend', up);
-  viewport.addEventListener('touchcancel', up);
+  viewer.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1 && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  let lastTapAt = 0;
+  viewer.addEventListener('touchend', (e) => {
+    if (e.target.closest('button')) return; // 닫기/이전/다음 버튼은 그대로
+    const now = Date.now();
+    if (now - lastTapAt < 320 && e.cancelable) e.preventDefault(); // 더블탭 확대 방지
+    lastTapAt = now;
+  });
+  document.addEventListener('gesturestart', (e) => {
+    if (viewer.classList.contains('is-active')) e.preventDefault();
+  });
+}
 
-  // Mouse (데스크톱 미리보기)
-  viewport.addEventListener('mousedown', (e) => { down(e.clientX, e.clientY); e.preventDefault(); });
-  window.addEventListener('mousemove', (e) => { if (dragging) move(e.clientX, e.clientY, e); });
-  window.addEventListener('mouseup', up);
+/* ── 웨딩 티켓 뒤집기 ── */
+function initTicket() {
+  const flip = document.getElementById('ticket-flip');
+  if (!flip) return;
 
-  window.addEventListener('resize', measure, { passive: true });
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', measure, { passive: true });
-  }
-
-  // 이미지 로드가 끝나면 정확한 높이로 다시 맞춥니다.
-  const imgs = Array.from(track.querySelectorAll('img'));
-  Promise.all(imgs.map((im) => (im.complete && im.naturalWidth)
-    ? Promise.resolve()
-    : new Promise((res) => {
-        im.addEventListener('load', res, { once: true });
-        im.addEventListener('error', res, { once: true });
-      })
-  )).then(() => { measure(); });
-
-  measure();
-  updateCounter();
+  const toggle = () => flip.classList.toggle('is-flipped');
+  flip.addEventListener('click', toggle);
+  flip.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggle();
+    }
+  });
 }
 
 
@@ -807,10 +838,11 @@ function initCalendar() {
     const addr = $('#loc-address');
     const tel = $('#loc-tel');
 
-    if (venue) venue.textContent = w.venue;
-    if (hall) hall.textContent = w.hall;
-    if (addr) addr.textContent = w.address;
-    if (tel) tel.textContent = `Tel. ${w.tel}`;
+    // 예식장 이름과 홀을 한 줄로, 주소/연락처는 표시하지 않음
+    if (venue) venue.textContent = `${w.venue} ${w.hall}`;
+    if (hall) hall.style.display = 'none';
+    if (addr) addr.style.display = 'none';
+    if (tel) tel.style.display = 'none';
 
     const kakao = $('#btn-kakao-map');
     const naver = $('#btn-naver-map');
@@ -863,7 +895,162 @@ function initCalendar() {
       });
     }
 
+    initMap();
     initTransport();
+    initShareButtons();
+  }
+
+  /* ── 최하단 공유 버튼 (주소 복사 · 카카오톡 공유) ── */
+  function initShareButtons() {
+    const copyBtn = document.getElementById('btn-copy-address-bottom');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        copyToClipboard(CONFIG.wedding.address, '주소가 복사되었습니다');
+      });
+    }
+
+    const kakaoBtn = document.getElementById('btn-kakao-share');
+    if (!kakaoBtn) return;
+
+    kakaoBtn.addEventListener('click', async () => {
+      const shareData = {
+        title: CONFIG.kakaoShare.title || CONFIG.meta.title,
+        text: CONFIG.kakaoShare.description || CONFIG.meta.description,
+        url: window.location.href.split('#')[0]
+      };
+
+      // 1순위: 카카오 SDK (config.js에 appKey를 넣으면 카카오톡 공유창이 바로 열립니다)
+      if (window.Kakao && CONFIG.kakaoShare.appKey) {
+        try {
+          if (!Kakao.isInitialized()) Kakao.init(CONFIG.kakaoShare.appKey);
+          Kakao.Share.sendDefault({
+            objectType: 'feed',
+            content: {
+              title: shareData.title,
+              description: shareData.text,
+              imageUrl: new URL('images/og/1.png', window.location.href).href,
+              link: { mobileWebUrl: shareData.url, webUrl: shareData.url }
+            },
+            buttons: [{
+              title: '청첩장 보기',
+              link: { mobileWebUrl: shareData.url, webUrl: shareData.url }
+            }]
+          });
+          return;
+        } catch (e) { /* 아래 공유 시트로 폴백 */ }
+      }
+
+      // 2순위: 휴대폰 기본 공유 시트 (카카오톡 선택 가능)
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return; // 사용자가 취소
+        }
+      }
+
+      // 3순위: 링크 복사
+      copyToClipboard(shareData.url, '청첩장 링크가 복사되었습니다. 카카오톡에 붙여넣어 주세요.');
+    });
+  }
+
+  /* ── 지도: 네이버 지도 우선 시도 → 실패 시 자동으로 구글 지도 임베드로 전환 ──
+     네이버 Open API는 콘솔 등록이 안 맞으면 화면에 "인증이 실패했습니다"라는
+     보기 안좋은 에러 패널을 그대로 노출합니다. 이를 막기 위해
+     1) window.navermap_authFailure 콜백(네이버 공식 훅)을 미리 등록해 인증 실패를
+        조용히 감지하고, 2) 스크립트 자체가 로드되지 않거나 3초 안에 정상
+        렌더링되지 않는 경우까지 포함해 항상 구글 지도 임베드로 자연스럽게
+        전환되도록 했습니다. 즉, 네이버 콘솔 설정이 맞으면 네이버 지도가,
+        아직 안 맞으면 사용자 눈에 보이지 않게 구글 지도가 대신 뜹니다. */
+  function initMap() {
+    const wrap = document.getElementById('loc-map-wrap');
+    if (!wrap) return;
+
+    const NAVER_CLIENT_ID = '202liu94d4';
+    const address = CONFIG.wedding.address || CONFIG.wedding.venue;
+    let settled = false;
+
+    // 로딩 중 흰 화면 대신 은은한 안내를 먼저 표시합니다.
+    wrap.innerHTML = '<div class="loc-map-loading">지도를 불러오는 중…</div>';
+
+    function showGoogleFallback() {
+      if (settled) return;
+      settled = true;
+      wrap.innerHTML = '';
+      const query = encodeURIComponent(CONFIG.wedding.venue || CONFIG.wedding.address);
+      const iframe = document.createElement('iframe');
+      iframe.className = 'loc-map-frame';
+      iframe.setAttribute('title', '나비스퀘어 지도');
+      iframe.setAttribute('loading', 'lazy');
+      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      iframe.src = `https://maps.google.com/maps?q=${query}&z=16&hl=ko&output=embed`;
+      wrap.appendChild(iframe);
+    }
+
+    function renderNaverMap() {
+      if (settled || !window.naver || !window.naver.maps) { showGoogleFallback(); return; }
+      try {
+        settled = true;
+        wrap.innerHTML = '';
+        const naver = window.naver;
+        // 아산 시청 인근 대략 좌표로 우선 중심을 잡고, 지오코딩 성공 시 정확한 위치로 이동합니다.
+        const fallbackCenter = new naver.maps.LatLng(36.7898, 127.0044);
+        const map = new naver.maps.Map(wrap, { center: fallbackCenter, zoom: 16 });
+
+        if (naver.maps.Service && address) {
+          naver.maps.Service.geocode({ query: address }, function (status, response) {
+            if (status !== naver.maps.Service.Status.OK) return;
+            const item = response?.v2?.addresses?.[0];
+            if (!item) return;
+            const point = new naver.maps.LatLng(item.y, item.x);
+            map.setCenter(point);
+            new naver.maps.Marker({ position: point, map });
+          });
+        } else {
+          new naver.maps.Marker({ position: fallbackCenter, map });
+        }
+      } catch (e) {
+        settled = false;
+        showGoogleFallback();
+      }
+    }
+
+    function loadNaverScript(param) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?${param}=${NAVER_CLIENT_ID}`;
+        s.onload = () => {
+          // 인증 실패 시에도 onload는 정상 발생하므로, 실제 지도 객체 존재 여부로 재확인합니다.
+          if (window.naver && window.naver.maps && window.naver.maps.Map) resolve();
+          else reject(new Error('naver maps not ready'));
+        };
+        s.onerror = () => reject(new Error('script load failed'));
+        document.head.appendChild(s);
+      });
+    }
+
+    // 네이버 공식 인증 실패 콜백 — 등록해두면 에러 패널 대신 이 함수가 조용히 호출됩니다.
+    // 이미 네이버 지도 객체가 만들어진 뒤에 인증 실패가 감지될 수 있으므로,
+    // settled 상태를 초기화해 무조건 구글 지도로 덮어씁니다.
+    window.navermap_authFailure = function () {
+      settled = false;
+      showGoogleFallback();
+    };
+
+    const timeout = setTimeout(showGoogleFallback, 3500);
+
+    // 최신 파라미터(ncpKeyId)를 먼저 시도하고, 실패하면 구버전 파라미터(ncpClientId)로 한 번 더 시도합니다.
+    loadNaverScript('ncpKeyId')
+      .catch(() => loadNaverScript('ncpClientId'))
+      .then(() => {
+        clearTimeout(timeout);
+        renderNaverMap();
+      })
+      .catch(() => {
+        clearTimeout(timeout);
+        showGoogleFallback();
+      });
   }
 
   /* ── 오시는 길: 교통편 안내 (지도 버튼 아래) ── */
@@ -886,8 +1073,13 @@ function initCalendar() {
         .join('');
       return `
         <div class="location-transport__block">
-          <h3 class="location-transport__heading">${it.title}</h3>
-          ${lines}
+          <button class="location-transport__toggle" type="button" aria-expanded="false">
+            <span class="location-transport__heading">${it.title}</span>
+            <svg class="location-transport__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="location-transport__panel">
+            <div class="location-transport__panel-inner">${lines}</div>
+          </div>
         </div>
       `;
     }).join('');
@@ -895,6 +1087,15 @@ function initCalendar() {
     wrap.innerHTML = blocks + (data.note
       ? `<p class="location-transport__note">${data.note}</p>`
       : '');
+
+    // 소제목 클릭 → 해당 내용 펼침/접힘
+    wrap.querySelectorAll('.location-transport__toggle').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const block = btn.closest('.location-transport__block');
+        const open = block.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    });
 
     // 지도/버튼 영역 바로 아래에 배치 (없으면 섹션 끝에 추가)
     const buttons = $('#location .location__buttons');
@@ -1366,6 +1567,8 @@ function initCalendar() {
     await initStory();
     await initGallery();
     initGallerySlider();
+    initViewer();
+    initTicket();
   }
 
   if (document.readyState === 'loading') {
@@ -1414,14 +1617,28 @@ function initCalendar() {
     const oldHeadline = countdown.querySelector('.countdown__headline');
     if (oldHeadline) oldHeadline.remove();
 
+    // 작은 DAYS/HOURS/MIN/SEC 박스는 숨기고, D-day 숫자를 크게 보여줍니다.
+    countdown.querySelectorAll('.countdown__item').forEach((it) => {
+      it.style.display = 'none';
+    });
+
     if (!countdown.querySelector('.our-day-countdown__header')) {
       const header = document.createElement('div');
       header.className = 'our-day-countdown__header';
       header.innerHTML = `
-        <img class="our-day-countdown__swan" src="swan-divider.png" alt="백조 장식" />
         <p class="our-day-countdown__eyebrow">OUR DAY</p>
       `;
       countdown.prepend(header);
+    }
+
+    // D-day 큰 숫자 (달력에 종속되되 숫자는 또렷하게)
+    if (!countdown.querySelector('.our-day-dday')) {
+      const dday = document.createElement('p');
+      dday.className = 'our-day-dday';
+      dday.innerHTML = `<span class="our-day-dday__prefix">D-</span><span class="our-day-dday__num" id="our-day-dday-num">0</span>`;
+      const header = countdown.querySelector('.our-day-countdown__header');
+      if (header) header.insertAdjacentElement('afterend', dday);
+      else countdown.prepend(dday);
     }
 
     if (!countdown.querySelector('.our-day-countdown__message')) {
@@ -1438,11 +1655,13 @@ function initCalendar() {
 
     const target = new Date(`${CONFIG.wedding.date}T${CONFIG.wedding.time}:00`).getTime();
     const dayText = document.getElementById('our-day-days-text');
+    const ddayNum = document.getElementById('our-day-dday-num');
 
     function refreshDayText() {
       const diff = Math.max(0, target - Date.now());
-      const days = Math.floor(diff / 86400000);
+      const days = Math.ceil(diff / 86400000);
       if (dayText) dayText.textContent = `${days}일`;
+      if (ddayNum) ddayNum.textContent = days === 0 ? 'DAY' : days;
     }
 
     refreshDayText();
