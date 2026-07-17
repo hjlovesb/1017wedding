@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rsvpResponses/{docId} {
+      allow create: if
+        request.resource.data.keys().hasOnly([
+          'invitationId',
+          'name',
+          'attendance',
+          'count',
+          'createdAt',
+          'userAgent'
+        ]) &&
+        request.resource.data.keys().hasAll([
+          'invitationId',
+          'name',
+          'attendance',
+          'count',
+          'createdAt'
+        ]) &&
+        request.resource.data.invitationId is string &&
+        request.resource.data.invitationId.size() <= 80 &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() >= 2 &&
+        request.resource.data.name.size() <= 20 &&
+        request.resource.data.attendance in ['attend', 'absent'] &&
+        request.resource.data.count is int &&
+        request.resource.data.count >= 0 &&
+        request.resource.data.count <= 10 &&
+        request.resource.data.createdAt == request.time &&
+        (!('userAgent' in request.resource.data) ||
+          (request.resource.data.userAgent is string &&
+           request.resource.data.userAgent.size() <= 180));
+
+      allow read, update, delete: if false;
+    }
+  }
+}
