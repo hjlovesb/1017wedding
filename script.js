@@ -614,8 +614,8 @@ async function initCalendar() {
       img.style.setProperty('animation', 'none', 'important');
     });
 
-    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced || n < 2) return;
+    const reduced = false;
+    if (n < 2) return;
 
     let started = performance.now();
     function tick(now) {
@@ -654,7 +654,7 @@ async function initCalendar() {
       img.style.setProperty('opacity', i === order[0] ? '1' : '0', 'important');
     });
 
-    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = false;
     if (reduced) return;
 
     function tick(now) {
@@ -705,7 +705,7 @@ async function initCalendar() {
     });
     stack.style.setProperty('will-change', 'transform', 'important');
 
-    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = false;
     if (reduced) return;
 
     function ease(x) {
@@ -743,7 +743,7 @@ async function initCalendar() {
   if (!gallery || !galleryImages.length) return;
 
   const N = galleryImages.length;
-  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReduced = false;
 
   // 진짜 필름처럼 "끊김 없이 물 흐르듯" 연속으로 흘러가게 하기 위해,
   // 사진 세트를 여러 번 이어 붙이고 한 세트 폭만큼 지나가면 살짝 되감아

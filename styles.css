@@ -20422,3 +20422,25 @@ html.viewer-open, html.viewer-open body { overflow: hidden !important; overscrol
   transition: none !important;
   transform: none !important;
 }
+
+
+/* ================================================================
+   v50 — mobile animation force-enable fix
+   Mobile browsers or OS settings can report prefers-reduced-motion and
+   stop decorative animations. Force key invitation animations to run.
+   ================================================================ */
+#gallery-grid, #gallery-grid * ,
+#footer-wine-frames, #footer-wine-frames *,
+#footer-swan-frames, #footer-swan-frames *,
+.story-postcard, .story-postcard *,
+.curtain-card, .curtain-card *,
+.hero-ornament, .hero-ornament * {
+  -webkit-animation-play-state: running !important;
+  animation-play-state: running !important;
+}
+#footer-swan-frames,
+#footer-wine-frames,
+#gallery-grid {
+  transform: translateZ(0) !important;
+  will-change: transform !important;
+}
