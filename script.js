@@ -6,6 +6,12 @@
 (function () {
   'use strict';
 
+  // Always reopen from the intro and the first main scene, never from a restored mid-page scroll.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  const resetPageScroll = () => window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  resetPageScroll();
+  window.addEventListener('pageshow', resetPageScroll);
+
   /* ── Helpers ── */
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
@@ -206,10 +212,17 @@ function initCurtain() {
   }
 
   function revealMainBehindIntro() {
+    // Mobile browsers often restore the previous scroll position after refresh.
+    // Reset twice (before and after paint) so the wine-box hero is always the first main scene.
+    resetPageScroll();
     document.body.classList.remove('intro-active');
     document.body.classList.add('intro-revealing');
     document.body.style.overflow = '';
     initPetals();
+    requestAnimationFrame(() => {
+      resetPageScroll();
+      window.dispatchEvent(new CustomEvent('invitation:opened'));
+    });
   }
 
   function hideIntroCompletely() {
@@ -413,7 +426,12 @@ async function initCalendar() {
       <em class="wtimer__s">:</em>
       <span class="wtimer__u"><b id="wt-s">0</b><i>SEC</i></span>
     </div>
-    <div class="wcount" id="wcount"></div>
+    <div class="wcount" id="wcount" aria-live="polite">
+      <span class="wcount__name">현준</span>
+      <img class="wcount__swan" src="swan-divider.png" alt="사랑" />
+      <span class="wcount__name">상빈</span>
+      <span class="wcount__message"><span class="wcount__days">0</span>일 남았습니다</span>
+    </div>
   `;
 
   // ── 디데이: 슬림 타이머(일:시:분:초) + "결혼식까지 N일" 알약 ──
@@ -435,12 +453,18 @@ async function initCalendar() {
     if (tM) tM.textContent = String(minutes).padStart(2, '0');
     if (tS) tS.textContent = String(seconds).padStart(2, '0');
     if (wcountEl) {
-      let text;
-      if (days > 0) text = `결혼식까지 ${days}일 남았습니다`;
-      else if (diff > 0) text = '결혼식이 곧 시작됩니다';
-      else if (diff === 0 || (Date.now() - target) < 86400000) text = '오늘, 저희 결혼합니다';
-      else text = '함께해 주셔서 감사합니다';
-      wcountEl.setAttribute('data-dday-text', text);
+      const daysEl = wcountEl.querySelector('.wcount__days');
+      const messageEl = wcountEl.querySelector('.wcount__message');
+      if (days > 0) {
+        if (daysEl) daysEl.textContent = days;
+        if (messageEl) messageEl.innerHTML = `결혼식까지 <span class="wcount__days">${days}</span>일 남았습니다`;
+      } else if (diff > 0) {
+        if (messageEl) messageEl.textContent = '결혼식이 곧 시작됩니다';
+      } else if ((Date.now() - target) < 86400000) {
+        if (messageEl) messageEl.textContent = '오늘, 저희 결혼합니다';
+      } else {
+        if (messageEl) messageEl.textContent = '함께해 주셔서 감사합니다';
+      }
     }
   }
   tickDday();
@@ -569,56 +593,146 @@ async function initCalendar() {
     });
   }
 
-  async function initFooterButterflies() {
-    const stack = document.getElementById('footer-wine-frames');
-    const stage = document.getElementById('bf-stage');
+  function startFrameCrossfade(stackId, options = {}) {
+    const stack = document.getElementById(stackId);
     if (!stack) return;
+    const imgs = Array.from(stack.querySelectorAll('img'));
+    if (!imgs.length) return;
 
-    // 나비 프레임: images/footer/00.png ~ 20.png (21장)
-    const N = 21;
-    const first = await imageExists('images/footer/00.png');
-    if (!first) {
-      if (stage) stage.style.display = 'none';
-      return;
+    const duration = Number(options.duration) || 12000;
+    const sigma = Number(options.sigma) || 0.88;
+    const floatPx = Number(options.floatPx) || 0;
+    const n = imgs.length;
+
+    imgs.forEach((img, i) => {
+      img.style.setProperty('position', 'absolute', 'important');
+      img.style.setProperty('inset', '0', 'important');
+      img.style.setProperty('width', '100%', 'important');
+      img.style.setProperty('height', '100%', 'important');
+      img.style.setProperty('object-fit', 'cover', 'important');
+      img.style.setProperty('opacity', i === 0 ? '1' : '0', 'important');
+      img.style.setProperty('animation', 'none', 'important');
+    });
+
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || n < 2) return;
+
+    let started = performance.now();
+    function tick(now) {
+      const phase = ((now - started) % duration) / duration * n;
+      for (let i = 0; i < n; i++) {
+        let d = i - phase;
+        if (d > n / 2) d -= n;
+        if (d < -n / 2) d += n;
+        const opacity = Math.exp(-(d * d) / (2 * sigma * sigma));
+        const y = floatPx ? Math.sin((phase + i * 0.38) * 0.65) * floatPx : 0;
+        imgs[i].style.setProperty('opacity', opacity < 0.012 ? '0' : opacity.toFixed(3), 'important');
+        imgs[i].style.setProperty('transform', `translate3d(0, ${y.toFixed(2)}px, 0)`, 'important');
+      }
+      requestAnimationFrame(tick);
     }
+    requestAnimationFrame(tick);
+  }
 
-    const imgs = [];
-    for (let i = 0; i < N; i++) {
-      const n = ('0' + i).slice(-2);
-      const im = new Image();
-      im.src = `images/footer/${n}.png`;
-      im.alt = '';
-      im.draggable = false;
-      im.decoding = 'async';
-      stack.appendChild(im);
-      imgs.push(im);
-    }
+  function initFooterButterflies() {
+    const stack = document.getElementById('footer-wine-frames');
+    if (!stack) return;
+    const imgs = Array.from(stack.querySelectorAll('img'));
+    if (!imgs.length) return;
 
-    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced || imgs.length < 2) {
-      // 모션 최소화: 가운데 프레임 한 장만 정지 표시
-      const mid = imgs[Math.floor(imgs.length / 2)];
-      if (mid) mid.style.opacity = '1';
-      return;
-    }
+    const order = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,0,1];
+    const paleSlot = {0:1,2:1,5:1,13:1,14:1,16:1,17:1,18:1,19:1,20:1};
+    const range = order.length;
+    const sigF = 0.82;
+    const sigB = 0.50;
+    const speed = 0.0013;
+    let pos = 0;
+    let last = performance.now();
 
-    /* 가우시안 스윕 크로스페이드 — 인접 프레임들이 종 모양 가중치로
-       겹쳐지며 물 흐르듯 이어지는 날갯짓 (위젯 원본 로직) */
-    const LO = 0, HI = N - 1, range = HI - LO + 1;
-    const sigma = 0.72, speed = 0.0022;
-    let pos = 0, last = performance.now();
+    imgs.forEach((img, i) => {
+      img.style.setProperty('animation', 'none', 'important');
+      img.style.setProperty('opacity', i === order[0] ? '1' : '0', 'important');
+    });
+
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
 
     function tick(now) {
-      const dt = now - last; last = now;
-      pos = (pos + speed * dt) % range;
-      const center = LO + pos;
-      for (let k = 0; k < imgs.length; k++) {
-        let d = k - center;
+      const dt = now - last;
+      last = now;
+      const factor = paleSlot[Math.round(pos) % range] ? 1.7 : 1;
+      pos = (pos + speed * dt * factor) % range;
+
+      for (let k = 0; k < order.length; k++) {
+        let d = k - pos;
         if (d > range / 2) d -= range;
         if (d < -range / 2) d += range;
-        const op = Math.exp(-(d * d) / (2 * sigma * sigma));
-        imgs[k].style.opacity = op < 0.01 ? '0' : op.toFixed(3);
+        const sigma = d < 0 ? sigB : sigF;
+        const opacity = Math.exp(-(d * d) / (2 * sigma * sigma));
+        imgs[order[k]].style.setProperty('opacity', opacity < 0.01 ? '0' : opacity.toFixed(3), 'important');
       }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function initFooterSwanMotion() {
+    const stack = document.getElementById('footer-swan-frames');
+    if (!stack) return;
+    const imgs = Array.from(stack.querySelectorAll('img')).filter(img => /swan-seq-\d+\.png$/i.test(img.getAttribute('src') || ''));
+    if (!imgs.length) return;
+
+    Array.from(stack.querySelectorAll('img')).forEach(img => {
+      const isSeq = /swan-seq-\d+\.png$/i.test(img.getAttribute('src') || '');
+      if (!isSeq) {
+        img.style.setProperty('display', 'none', 'important');
+        img.style.setProperty('opacity', '0', 'important');
+      }
+    });
+
+    const n = imgs.length;
+    const segmentMs = 1280;
+    const cycleMs = n * segmentMs;
+    const start = performance.now();
+
+    imgs.forEach((img, i) => {
+      img.style.setProperty('display', 'block', 'important');
+      img.style.setProperty('animation', 'none', 'important');
+      img.style.setProperty('transition', 'none', 'important');
+      img.style.setProperty('opacity', i === 0 ? '1' : '0', 'important');
+      img.style.setProperty('transform', 'none', 'important');
+      img.style.setProperty('will-change', 'opacity', 'important');
+    });
+    stack.style.setProperty('will-change', 'transform', 'important');
+
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) return;
+
+    function ease(x) {
+      x = Math.max(0, Math.min(1, x));
+      return x * x * (3 - 2 * x);
+    }
+
+    function tick(now) {
+      const t = (now - start) % cycleMs;
+      const current = Math.floor(t / segmentMs) % n;
+      const next = (current + 1) % n;
+      const local = (t % segmentMs) / segmentMs;
+      const k = ease(local);
+      const opacities = new Array(n).fill(0);
+      opacities[current] = 1 - k;
+      opacities[next] = k;
+
+      for (let i = 0; i < n; i++) {
+        imgs[i].style.setProperty('opacity', opacities[i] <= 0.001 ? '0' : opacities[i].toFixed(3), 'important');
+      }
+
+      const sec = now / 1000;
+      const x = Math.sin(sec * 0.060) * 0.42 + Math.sin(sec * 0.025) * 0.18;
+      const y = Math.sin(sec * 0.082) * 0.78 + Math.cos(sec * 0.034) * 0.24;
+      const rot = Math.sin(sec * 0.028) * 0.012;
+      stack.style.setProperty('transform', `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${rot.toFixed(3)}deg)`, 'important');
+
       requestAnimationFrame(tick);
     }
     requestAnimationFrame(tick);
@@ -801,66 +915,144 @@ function initViewer() {
   const track = document.getElementById('viewer-track');
   const closeBtn = document.getElementById('viewer-close');
   const counter = document.getElementById('viewer-counter');
-  const prevBtn = document.getElementById('viewer-prev');
-  const nextBtn = document.getElementById('viewer-next');
   if (!viewer || !track) return;
 
   let built = false;
-  let index = 0;
-  let width = 0;
+  let realIndex = 0;
+  let virtualIndex = 1;
+  let slideWidth = 0;
+  let openedAt = 0;
+  let animating = false;
+  let dragging = false;
+  let pointerId = null;
+  let startX = 0;
+  let lastX = 0;
+  let startTime = 0;
 
   function build() {
     if (built || !galleryImages.length) return;
     built = true;
-    track.innerHTML = galleryImages
-      .map((src) => `<div class="viewer__slide"><img src="${src}" alt="" draggable="false" /></div>`)
-      .join('');
+    const slides = [galleryImages[galleryImages.length - 1], ...galleryImages, galleryImages[0]];
+    track.innerHTML = slides.map((src, i) =>
+      `<div class="viewer__slide${i === 0 || i === slides.length - 1 ? ' is-clone' : ''}"><img src="${src}" alt="갤러리 사진" draggable="false" /></div>`
+    ).join('');
   }
 
-  function setX(x, animate) {
-    track.style.transition = animate ? 'transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1)' : 'none';
-    track.style.transform = `translate3d(${x}px, 0, 0)`;
+  function measure() {
+    slideWidth = viewer.getBoundingClientRect().width || window.innerWidth;
   }
 
-  function snap(animate) {
-    width = viewer.clientWidth || window.innerWidth;
-    setX(-index * width, animate);
-    if (counter) counter.textContent = `${index + 1} / ${galleryImages.length}`;
+  function updateCounter() {
+    if (counter) counter.textContent = `${realIndex + 1} / ${galleryImages.length}`;
   }
 
-  let openedAt = 0;
-
-  function open(startIndex) {
-    build();
-    if (!built) return;
-    index = Math.max(0, Math.min(galleryImages.length - 1, startIndex || 0));
-    openedAt = Date.now();
-    viewer.classList.add('is-active');
-    viewer.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-    snap(false);
+  function moveTo(px, animate) {
+    track.style.transition = animate ? 'transform 560ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none';
+    track.style.transform = `translate3d(${px}px,0,0)`;
   }
 
-  function close() {
-    // 갤러리 탭 직후 따라오는 고스트 클릭이 뷰어를 곧바로 닫는 것 방지
-    if (Date.now() - openedAt < 500) return;
-    viewer.classList.remove('is-active');
-    viewer.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+  function snap(animate = true) {
+    measure();
+    moveTo(-virtualIndex * slideWidth, animate);
+    updateCounter();
+  }
+
+  function normalize() {
+    const n = galleryImages.length;
+    if (virtualIndex === 0) {
+      virtualIndex = n;
+      realIndex = n - 1;
+      snap(false);
+    } else if (virtualIndex === n + 1) {
+      virtualIndex = 1;
+      realIndex = 0;
+      snap(false);
+    }
+    animating = false;
   }
 
   function go(dir) {
-    index = (index + dir + galleryImages.length) % galleryImages.length;
+    if (animating || galleryImages.length < 2) return;
+    animating = true;
+    virtualIndex += dir;
+    realIndex = (realIndex + dir + galleryImages.length) % galleryImages.length;
     snap(true);
   }
 
+  function open(startIndex = 0) {
+    build();
+    if (!built) return;
+    realIndex = Math.max(0, Math.min(galleryImages.length - 1, Number(startIndex) || 0));
+    virtualIndex = realIndex + 1;
+    openedAt = Date.now();
+    viewer.classList.add('is-active');
+    viewer.setAttribute('aria-hidden', 'false');
+    document.documentElement.classList.add('viewer-open');
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => requestAnimationFrame(() => snap(false)));
+    window.dispatchEvent(new CustomEvent('gallery:viewer'));
+  }
+
+  function close() {
+    if (Date.now() - openedAt < 250) return;
+    viewer.classList.remove('is-active');
+    viewer.setAttribute('aria-hidden', 'true');
+    document.documentElement.classList.remove('viewer-open');
+    document.body.style.overflow = '';
+    window.dispatchEvent(new CustomEvent('gallery:viewer'));
+  }
+
+  function begin(x, id) {
+    if (animating) return;
+    measure();
+    dragging = true;
+    pointerId = id;
+    startX = lastX = x;
+    startTime = performance.now();
+    track.style.transition = 'none';
+  }
+
+  function drag(x) {
+    if (!dragging) return;
+    lastX = x;
+    moveTo(-virtualIndex * slideWidth + (x - startX), false);
+  }
+
+  function finish() {
+    if (!dragging) return;
+    dragging = false;
+    const dx = lastX - startX;
+    const elapsed = Math.max(1, performance.now() - startTime);
+    const velocity = dx / elapsed;
+    pointerId = null;
+    if (Math.abs(dx) > slideWidth * 0.18 || Math.abs(velocity) > 0.42) go(dx < 0 ? 1 : -1);
+    else snap(true);
+  }
+
   window.__openGalleryViewer = open;
+  track.addEventListener('transitionend', (e) => {
+    if (e.propertyName === 'transform') normalize();
+  });
+
+  track.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    begin(e.clientX, e.pointerId);
+    try { track.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  track.addEventListener('pointermove', (e) => {
+    if (!dragging || e.pointerId !== pointerId) return;
+    if (e.cancelable) e.preventDefault();
+    drag(e.clientX);
+  }, { passive: false });
+  track.addEventListener('pointerup', finish);
+  track.addEventListener('pointercancel', finish);
+  track.addEventListener('lostpointercapture', finish);
 
   if (closeBtn) closeBtn.addEventListener('click', close);
   const backdrop = viewer.querySelector('.viewer__backdrop');
   if (backdrop) backdrop.addEventListener('click', close);
-  if (prevBtn) prevBtn.addEventListener('click', () => go(-1));
-  if (nextBtn) nextBtn.addEventListener('click', () => go(1));
+  viewer.querySelectorAll('.viewer__nav').forEach((btn) => btn.remove());
+
   document.addEventListener('keydown', (e) => {
     if (!viewer.classList.contains('is-active')) return;
     if (e.key === 'Escape') close();
@@ -868,60 +1060,9 @@ function initViewer() {
     if (e.key === 'ArrowRight') go(1);
   });
 
-  // 확대 화면에서도 손가락 스와이프로 넘기기
-  let startX = 0, startY = 0, lastX = 0, dragging = false, horizontal = false, decided = false;
-  track.addEventListener('touchstart', (e) => {
-    if (!e.touches[0]) return;
-    dragging = true; decided = false; horizontal = false;
-    startX = lastX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-    track.style.transition = 'none';
-  }, { passive: true });
-  track.addEventListener('touchmove', (e) => {
-    if (!dragging || !e.touches[0]) return;
-    const x = e.touches[0].clientX;
-    const dx = x - startX;
-    const dy = e.touches[0].clientY - startY;
-    if (!decided) {
-      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
-      horizontal = Math.abs(dx) > Math.abs(dy);
-      decided = true;
-    }
-    if (!horizontal) return;
-    if (e.cancelable) e.preventDefault();
-    lastX = x;
-    setX(-index * width + dx, false);
-  }, { passive: false });
-  track.addEventListener('touchend', () => {
-    if (!dragging) return;
-    dragging = false;
-    if (!horizontal) { snap(false); return; }
-    const dx = lastX - startX;
-    if (Math.abs(dx) > width * 0.15) go(dx < 0 ? 1 : -1);
-    else snap(true);
-  });
-
   window.addEventListener('resize', () => {
     if (viewer.classList.contains('is-active')) snap(false);
   }, { passive: true });
-
-  // 확대 화면에서는 더 이상 확대되지 않도록 잠급니다 (핀치/더블탭 차단)
-  viewer.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 1 && e.cancelable) e.preventDefault();
-  }, { passive: false });
-  viewer.addEventListener('touchmove', (e) => {
-    if (e.touches.length > 1 && e.cancelable) e.preventDefault();
-  }, { passive: false });
-  let lastTapAt = 0;
-  viewer.addEventListener('touchend', (e) => {
-    if (e.target.closest('button')) return; // 닫기/이전/다음 버튼은 그대로
-    const now = Date.now();
-    if (now - lastTapAt < 320 && e.cancelable) e.preventDefault(); // 더블탭 확대 방지
-    lastTapAt = now;
-  });
-  document.addEventListener('gesturestart', (e) => {
-    if (viewer.classList.contains('is-active')) e.preventDefault();
-  });
 }
 
 /* ── OUR STORY: 우편엽서 미니멀 타임라인 ──
@@ -930,12 +1071,15 @@ function initViewer() {
 async function initStoryPost() {
   const section = document.getElementById('letter');
   if (!section) return;
-
-  // 스크롤로 들어올 때 액자가 부드럽게 올라오며 나타나는 모션
   const frames = section.querySelectorAll('[data-reveal]');
   if (!frames.length) return;
 
-  if ('IntersectionObserver' in window) {
+  frames.forEach((f) => f.classList.remove('is-in'));
+  const startReveal = () => {
+    if (!('IntersectionObserver' in window)) {
+      frames.forEach((f) => f.classList.add('is-in'));
+      return;
+    }
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting) {
@@ -943,13 +1087,16 @@ async function initStoryPost() {
           io.unobserve(e.target);
         }
       });
-    }, { threshold: 0.2, rootMargin: '0px 0px -8% 0px' });
+    }, { threshold: 0.24, rootMargin: '0px 0px -12% 0px' });
     frames.forEach((f) => io.observe(f));
+  };
+
+  if (document.body.classList.contains('intro-active')) {
+    window.addEventListener('invitation:opened', startReveal, { once: true });
   } else {
-    frames.forEach((f) => f.classList.add('is-in'));
+    startReveal();
   }
 
-  // 액자 이미지가 없으면 그 항목만 조용히 숨깁니다.
   section.querySelectorAll('.storyframe__img img').forEach((img) => {
     img.addEventListener('error', () => {
       const fig = img.closest('.storyframe');
@@ -968,7 +1115,7 @@ async function initStoryPost() {
     const tel = $('#loc-tel');
 
     // 예식장 이름과 홀을 한 줄로, 주소/연락처는 표시하지 않음
-    if (venue) venue.textContent = `${w.venue} ${w.hall}`;
+    if (venue) venue.innerHTML = `${w.venue} <span class="location__hall-inline">${w.hall}</span>`;
     if (hall) hall.style.display = 'none';
     if (addr) addr.style.display = 'none';
     if (tel) tel.style.display = 'none';
@@ -1398,34 +1545,39 @@ async function initStoryPost() {
     }
   }
 
-  /* ── Scroll Animations (IntersectionObserver) ── */
+  /* ── Scroll Animations: start only after the envelope opens ── */
   let scrollObserver = null;
+  let scrollAnimationsStarted = false;
 
   function initScrollAnimations() {
-    const targets = $$('.anim-target, .gallery__item, .story__img-card');
+    if (scrollAnimationsStarted) return;
+    scrollAnimationsStarted = true;
+    const targets = $$('.anim-target, .gallery__item');
     if (!targets.length) return;
 
-    scrollObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible');
-            scrollObserver.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
-    );
+    targets.forEach((el) => el.classList.remove('is-visible'));
+    scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          scrollObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -12% 0px' });
 
     targets.forEach((el) => scrollObserver.observe(el));
   }
 
-  // Re-observe dynamically added elements after async image loading
   function observeNewElements(container) {
     if (!scrollObserver) return;
-    const targets = $$('.gallery__item, .story__img-card', container);
-    targets.forEach((el) => scrollObserver.observe(el));
+    const targets = $$('.gallery__item', container);
+    targets.forEach((el) => {
+      el.classList.remove('is-visible');
+      scrollObserver.observe(el);
+    });
   }
+
+  window.addEventListener('invitation:opened', initScrollAnimations, { once: true });
 
 /* =========================================
    Luxury Star Sparkle Fall
@@ -1762,13 +1914,12 @@ async function initStoryPost() {
     initLocation();
     initAccount();
 
-    setTimeout(initScrollAnimations, 200);
-
     await initGallery();
     initGallerySlider();
     initViewer();
     initStoryPost();
     initFooterButterflies();
+    initFooterSwanMotion();
   }
 
   if (document.readyState === 'loading') {
