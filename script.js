@@ -1360,113 +1360,18 @@ async function initStoryPost() {
     const wrap = document.getElementById('loc-map-wrap');
     if (!wrap) return;
 
-    // 네이버 지도 키는 config.js의 map.naverClientId에서 읽습니다.
-    // 이 키가 네이버 클라우드 콘솔에 "배포된 도메인"과 함께 등록되어 있어야
-    // 네이버 지도가 뜨고, 인증이 실패하면 자동으로 구글 지도로 대체됩니다.
-    const NAVER_CLIENT_ID = (typeof CONFIG !== 'undefined' && CONFIG.map && CONFIG.map.naverClientId) || '202liu94d4';
-    const address = CONFIG.wedding.address || CONFIG.wedding.venue;
-    let settled = false;
-
-    // 로딩 중 흰 화면 대신 은은한 안내를 먼저 표시합니다.
-    wrap.innerHTML = '<div class="loc-map-loading">지도를 불러오는 중…</div>';
-
-    function showGoogleFallback() {
-      if (settled) return;
-      settled = true;
-      wrap.innerHTML = '';
-      const query = encodeURIComponent(CONFIG.wedding.venue || CONFIG.wedding.address);
-      const iframe = document.createElement('iframe');
-      iframe.className = 'loc-map-frame';
-      iframe.setAttribute('title', '나비스퀘어 지도');
-      iframe.setAttribute('loading', 'lazy');
-      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-      iframe.src = `https://maps.google.com/maps?q=${query}&z=16&hl=ko&output=embed`;
-      wrap.appendChild(iframe);
-    }
-
-    function renderNaverMap() {
-      if (settled || !window.naver || !window.naver.maps) { showGoogleFallback(); return; }
-      try {
-        settled = true;
-        wrap.innerHTML = '';
-        const naver = window.naver;
-        // 아산 시청 인근 대략 좌표로 우선 중심을 잡고, 지오코딩 성공 시 정확한 위치로 이동합니다.
-        const fallbackCenter = new naver.maps.LatLng(36.7898, 127.0044);
-        const map = new naver.maps.Map(wrap, { center: fallbackCenter, zoom: 16 });
-
-        if (naver.maps.Service && address) {
-          naver.maps.Service.geocode({ query: address }, function (status, response) {
-            if (status !== naver.maps.Service.Status.OK) return;
-            const item = response?.v2?.addresses?.[0];
-            if (!item) return;
-            const point = new naver.maps.LatLng(item.y, item.x);
-            map.setCenter(point);
-            new naver.maps.Marker({ position: point, map });
-          });
-        } else {
-          new naver.maps.Marker({ position: fallbackCenter, map });
-        }
-      } catch (e) {
-        settled = false;
-        showGoogleFallback();
-      }
-    }
-
-    function loadNaverScript(param) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        // submodules=geocoder: 주소 → 좌표 변환(Service.geocode)에 필요
-        s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?${param}=${NAVER_CLIENT_ID}&submodules=geocoder`;
-        s.onload = () => {
-          // 인증 실패 시에도 onload는 정상 발생하므로, 실제 지도 객체 존재 여부로 재확인합니다.
-          if (window.naver && window.naver.maps && window.naver.maps.Map) resolve();
-          else reject(new Error('naver maps not ready'));
-        };
-        s.onerror = () => reject(new Error('script load failed'));
-        document.head.appendChild(s);
-      });
-    }
-
-    // 신규 콘솔(ncpKeyId) → 구 콘솔(ncpClientId) 순서로 시도합니다.
-    // 인증 실패는 스크립트 로드 "이후" 비동기로 통보되므로(navermap_authFailure),
-    // 콜백 안에서 남은 파라미터로 한 번 더 재시도한 뒤에야 구글 지도로 전환합니다.
-    const paramQueue = ['ncpClientId'];      // ncpKeyId 실패 시 남은 재시도 목록
-    let timeout = setTimeout(showGoogleFallback, 4000);
-
-    function tryLoad(param) {
-      loadNaverScript(param)
-        .then(() => {
-          clearTimeout(timeout);
-          // 렌더링 후에도 인증 실패 콜백이 올 수 있으므로 여유 타임아웃은 걸지 않습니다.
-          renderNaverMap();
-        })
-        .catch(() => {
-          clearTimeout(timeout);
-          const next = paramQueue.shift();
-          if (next) {
-            timeout = setTimeout(showGoogleFallback, 4000);
-            tryLoad(next);
-          } else {
-            showGoogleFallback();
-          }
-        });
-    }
-
-    // 네이버 공식 인증 실패 콜백 — 에러 패널 대신 이 함수가 조용히 호출됩니다.
-    window.navermap_authFailure = function () {
-      settled = false;
-      const next = paramQueue.shift();
-      if (next) {
-        clearTimeout(timeout);
-        wrap.innerHTML = '<div class="loc-map-loading">지도를 불러오는 중…</div>';
-        timeout = setTimeout(showGoogleFallback, 4000);
-        tryLoad(next);
-      } else {
-        showGoogleFallback();
-      }
-    };
-
-    tryLoad('ncpKeyId');
+    // 모바일에서 지도 타일/컨트롤 이미지가 깨져 흰색 십자가로 보이는 현상을 막기 위해
+    // 외부 이미지 타일을 직접 그리는 방식 대신 안정적인 Google 지도 iframe만 사용합니다.
+    wrap.innerHTML = '';
+    const query = encodeURIComponent(CONFIG.wedding.venue || CONFIG.wedding.address || '');
+    const iframe = document.createElement('iframe');
+    iframe.className = 'loc-map-frame';
+    iframe.setAttribute('title', '예식장 지도');
+    iframe.setAttribute('loading', 'lazy');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+    iframe.src = `https://maps.google.com/maps?q=${query}&z=16&hl=ko&output=embed`;
+    wrap.appendChild(iframe);
   }
 
   /* ── 오시는 길: 교통편 안내 (지도 버튼 아래) ── */
@@ -2037,4 +1942,37 @@ async function initStoryPost() {
   } else {
     init();
   }
+})();
+
+
+/* MOBILE_IMAGE_FALLBACK_20260723 */
+(function () {
+  const fallbackMap = {
+    'images/intro/1.png': 'images/intro/intro-bg.png',
+    'images/intro/1.jpg': 'images/intro/intro-bg.png',
+    'images/curtain.jpeg': 'images/intro/intro-bg.png',
+    'images/ui/popup_sky_texture.jpg': 'images/popup-bg.png',
+    'images/ui/popup_beige_paper.jpg': 'images/popup-bg.png'
+  };
+
+  function fixImage(img) {
+    if (!img || img.dataset.mobileFallbackBound === '1') return;
+    img.dataset.mobileFallbackBound = '1';
+    img.addEventListener('error', function () {
+      const raw = (img.getAttribute('src') || '').replace(/^\.\//, '').split('?')[0];
+      const fallback = fallbackMap[raw];
+      if (fallback && img.getAttribute('src') !== fallback) img.src = fallback;
+    }, { once: false });
+  }
+
+  document.querySelectorAll('img').forEach(fixImage);
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      record.addedNodes.forEach(function (node) {
+        if (node.nodeType !== 1) return;
+        if (node.tagName === 'IMG') fixImage(node);
+        node.querySelectorAll && node.querySelectorAll('img').forEach(fixImage);
+      });
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();

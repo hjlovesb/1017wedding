@@ -14318,38 +14318,110 @@ body .section .section__title::after { content: none !important; display: none !
 #gallery-grid img { border-radius: 0 !important; box-shadow: none !important; }
 
 /* ================================================================
-   MOBILE RSVP POPUP BACKGROUND FIX (2026-07-23)
-   Uses a real local image file instead of inline/data backgrounds so
-   mobile browsers and hosted builds load the artwork reliably.
+   MOBILE IMAGE COMPATIBILITY FIX (2026-07-23)
+   기존 디자인은 유지하고 모바일 브라우저의 이미지 누락만 보완
    ================================================================ */
+html, body { -webkit-text-size-adjust: 100%; }
+img, picture, svg {
+  max-width: 100%;
+}
+img {
+  display: block;
+  height: auto;
+  -webkit-user-drag: none;
+  image-rendering: auto;
+}
+
+/* 팝업 배경은 실제 포함 파일 하나로 통일 */
+.rsvp-modal,
+.rsvp-modal__dialog,
+.account-modal,
+.account-modal__dialog,
+.contact-modal,
+.contact-modal__dialog,
+.share-modal,
+.share-modal__dialog,
+[class*="popup"],
+[class*="modal"] [class*="dialog"] {
+  --popup-paper-image: url('./images/popup-bg.png');
+}
+
+.rsvp-modal__dialog,
+.account-modal__dialog,
+.contact-modal__dialog,
+.share-modal__dialog,
+.popup__dialog,
+.modal__dialog {
+  background-color: #f7f3eb !important;
+  background-image: var(--popup-paper-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 100% 100% !important;
+}
+
+/* Our Story 카드 이미지가 iOS에서 3D 변환 중 사라지는 현상 방지 */
+.card,
+.card__inner,
+.card__face {
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+.card__face {
+  -webkit-backface-visibility: hidden !important;
+  backface-visibility: hidden !important;
+  overflow: hidden !important;
+}
+.card__face img {
+  visibility: visible !important;
+  opacity: 1 !important;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+/* 주요 정적 이미지의 모바일 렌더링 안정화 */
+.curtain__image,
+#hero-img,
+.greeting__rose,
+.dcal__photo img,
+.location img,
+.tray img,
+.footer-wine2 img {
+  visibility: visible !important;
+  opacity: 1;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
 @media (max-width: 768px) {
-  .rsvp-modal__panel {
-    background-color: #f6f0e9 !important;
-    background-image: url("images/popup-bg.png") !important;
-    background-repeat: no-repeat !important;
-    background-position: center center !important;
-    background-size: cover !important;
-    -webkit-background-size: cover !important;
+  .rsvp-modal__dialog,
+  .account-modal__dialog,
+  .contact-modal__dialog,
+  .share-modal__dialog,
+  .popup__dialog,
+  .modal__dialog {
+    background-image: url('./images/popup-bg.png') !important;
+    background-size: 100% 100% !important;
   }
 
-  .rsvp-modal__panel::before {
-    content: '' !important;
-    position: absolute !important;
-    inset: 0 !important;
-    border: 0 !important;
-    border-radius: inherit !important;
-    background: rgba(255, 252, 248, 0.34) !important;
-    pointer-events: none !important;
-    z-index: 0 !important;
+  .card__face img {
+    object-fit: cover !important;
+    object-position: center !important;
   }
+}
 
-  .rsvp-modal__panel::after {
-    display: none !important;
-  }
 
-  .rsvp-modal__close,
-  .rsvp-modal__panel > .rsvp-card {
-    position: relative !important;
-    z-index: 1 !important;
-  }
+/* map white-cross fix */
+#loc-map-wrap {
+  overflow: hidden !important;
+  background: #f3f3f1 !important;
+}
+#loc-map-wrap .loc-map-frame {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  border: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: #f3f3f1 !important;
 }
