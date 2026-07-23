@@ -21,12 +21,12 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="styles.css?v=20260723-map-cross-fix" />
+  <link rel="stylesheet" href="styles.css?v=20260724k" />
 
   <!-- Intro / Thankyou image preload -->
-  <link rel="preload" as="image" href="images/intro/intro-bg.png" />
+  <link rel="preload" as="image" href="images/intro/intro-bg.jpg" />
   <link rel="preload" as="image" href="images/intro/envelope.png" />
-  <link rel="preload" as="image" href="images/hero/1.png" />
+  <link rel="preload" as="image" href="images/hero/1.jpg" />
 </head>
 <body>
 
@@ -101,6 +101,7 @@
         <h2 class="section__title script-font" id="greeting-title"></h2>
         <img class="greeting__rose" src="images/greeting/rose.png" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" />
         <p class="greeting__poem" id="greeting-poem"></p>
+        <span class="greeting__rule" aria-hidden="true"></span>
         <p class="greeting__text" id="greeting-text"></p>
       </div>
       <div class="floral-divider"></div>
@@ -121,7 +122,7 @@
         <div class="calendar" id="calendar"></div>
       </div>
     </section>
-    <!-- ── Our Story: 뒤집히는 엽서 ── -->
+    <!-- ── Our Story: 엽서 3장 ── -->
     <section class="section ourstory" id="letter">
       <div class="section__inner">
 
@@ -130,10 +131,10 @@
         <div class="cards" id="story-cards" data-reveal>
           <div class="cards__stage">
 
-            <div class="card is-current" data-card="0">
+            <div class="card is-current" data-card="0" data-flip="1">
               <div class="card__inner">
                 <div class="card__face card__face--front">
-                  <img src="images/postcard/2024-front.jpg" alt="신부 박상빈" decoding="async" draggable="false" />
+                  <img src="images/postcard/2024-front.jpg" alt="2024 letter to you" decoding="async" draggable="false" />
                 </div>
                 <div class="card__face card__face--back">
                   <img src="images/postcard/2024-back.jpg" alt="2024년 신부가 신랑에게 쓴 편지" decoding="async" draggable="false" />
@@ -141,10 +142,10 @@
               </div>
             </div>
 
-            <div class="card" data-card="1">
+            <div class="card" data-card="1" data-flip="1">
               <div class="card__inner">
                 <div class="card__face card__face--front">
-                  <img src="images/postcard/2025-front.jpg" alt="신랑 이현준" decoding="async" draggable="false" />
+                  <img src="images/postcard/2025-front.jpg" alt="2025 letter to you" decoding="async" draggable="false" />
                 </div>
                 <div class="card__face card__face--back">
                   <img src="images/postcard/2025-back.jpg" alt="2025년 신랑이 신부에게 쓴 편지" decoding="async" draggable="false" />
@@ -152,15 +153,11 @@
               </div>
             </div>
 
-            <div class="card card--last" data-card="2">
+            <div class="card card--last" data-card="2" data-flip="0">
               <div class="card__inner">
                 <div class="card__face card__face--front">
-                  <img src="images/postcard/2026-front.jpg" alt="신랑 신부" decoding="async" draggable="false" />
-                  <span class="card__yr">2026</span>
-                </div>
-                <div class="card__face card__face--back card__face--plain">
-                  <span class="card__yr card__yr--back">2026</span>
-                  <span class="card__closing">그리고, 영원이라는 계절로</span>
+                  <img src="images/postcard/2026-front.jpg" alt="letter to you" decoding="async" draggable="false" />
+                  <span class="card__yr"><i>WEDDING DAY</i><b>2026. 10. 17</b></span>
                 </div>
               </div>
             </div>
@@ -218,6 +215,40 @@
       <div class="floral-divider"></div>
     </section>
 
+    <!-- ── Information ── -->
+    <section class="section information" id="information">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font">Information</h2>
+
+        <div class="info__tabs" role="tablist">
+          <button class="info__tab is-on" type="button" data-info="meal" role="tab" aria-selected="true">식사</button>
+          <button class="info__tab" type="button" data-info="notice" role="tab" aria-selected="false">안내사항</button>
+        </div>
+
+        <div class="info__panel is-on" data-info-panel="meal">
+          <figure class="info__photo">
+            <img src="images/info/dining.jpg" alt="연회장 식사" loading="lazy" decoding="async" draggable="false" />
+          </figure>
+          <p class="info__text">
+            귀한 걸음 해주신 여러분을 위해<br />
+            정성으로 준비한 식사를 마련했습니다.<br />
+            <b>3층 연회장</b>에서 편히 식사하시기 바랍니다.
+          </p>
+        </div>
+
+        <div class="info__panel" data-info-panel="notice">
+          <figure class="info__photo">
+            <img src="images/info/notice.jpg" alt="쌀화환 안내" loading="lazy" decoding="async" draggable="false" />
+          </figure>
+          <p class="info__text">
+            나비스퀘어는 축하 화환 대신 <b>쌀화환</b>만 가능합니다.<br />
+            축하의 마음은 감사한 마음으로 뜻깊게 사용하겠습니다.
+          </p>
+        </div>
+      </div>
+      <div class="floral-divider"></div>
+    </section>
+
     <!-- ── Account (축의금) ── -->
     <section class="section account" id="account">
       <div class="section__inner anim-target">
@@ -242,17 +273,6 @@
           <div class="accordion__body" id="acc-bride-body"></div>
         </div>
 
-        <!-- 주소 복사 · 카카오톡 공유 -->
-        <div class="share-buttons cel-share">
-          <button class="share-btn share-btn--cel" id="btn-copy-address-bottom" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            <span>주소 복사</span>
-          </button>
-          <button class="share-btn share-btn--cel" id="btn-kakao-share" type="button">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.54 2 10.9c0 2.8 1.86 5.26 4.66 6.66-.15.52-.96 3.32-.99 3.54 0 0-.02.17.09.23.11.07.24.02.24.02.32-.05 3.66-2.4 4.24-2.81.57.08 1.16.13 1.76.13 5.52 0 10-3.54 10-7.9S17.52 3 12 3z"/></svg>
-            <span>카카오톡 공유</span>
-          </button>
-        </div>
       </div>
     </section>
 
@@ -264,22 +284,18 @@
         <img src="images/finale/tray.jpg" alt="" decoding="async" draggable="false" />
       </figure>
 
-      <div class="fsign">
-        <span class="fsign__rule" aria-hidden="true"></span>
-
-        <p class="fsign__names">
-          <span class="fsign__name">이현준</span>
-          <span class="fsign__amp" aria-hidden="true">&amp;</span>
-          <span class="fsign__name">박상빈</span>
-        </p>
-
-        <p class="fsign__date">
-          <span>2026</span><i aria-hidden="true"></i><span>10</span><i aria-hidden="true"></i><span>17</span>
-        </p>
-
-        <p class="fsign__venue">나비스퀘어 나비홀</p>
-
-        <span class="fsign__rule fsign__rule--bottom" aria-hidden="true"></span>
+      <div class="fbtns">
+        <button class="fbtn" id="btn-copy-address-bottom" type="button" aria-label="주소 복사">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+            <rect x="9" y="9" width="12" height="12" rx="2" />
+            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+          </svg>
+        </button>
+        <button class="fbtn" id="btn-kakao-share" type="button" aria-label="카카오톡 공유">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 3C6.48 3 2 6.54 2 10.9c0 2.8 1.86 5.26 4.66 6.66-.15.52-.96 3.32-.99 3.54 0 0-.02.17.09.23.11.07.24.02.24.02.32-.05 3.66-2.4 4.24-2.81.57.08 1.16.13 1.76.13 5.52 0 10-3.54 10-7.9S17.52 3 12 3z" />
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -293,12 +309,6 @@
     </button>
     <div class="viewer__counter" id="viewer-counter"></div>
     <div class="viewer__track" id="viewer-track"></div>
-    <button class="viewer__nav viewer__nav--prev" id="viewer-prev" aria-label="이전">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <button class="viewer__nav viewer__nav--next" id="viewer-next" aria-label="다음">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
-    </button>
   </div>
 
   <!-- ========== Attendance RSVP Modal — 카드형 ========== -->
@@ -316,6 +326,8 @@
           소중히 모시고자 합니다.<br />
           참석여부를 알려주시면 감사하겠습니다.
         </p>
+
+        <span class="rsvp-rule" aria-hidden="true"></span>
 
         <form class="rsvp-form" id="rsvp-form">
           <input class="rsvp-input" id="rsvp-name" name="name" type="text" placeholder="성함" maxlength="20" autocomplete="name" required />
@@ -342,9 +354,9 @@
   </div>
 
   <!-- Scripts -->
-  <script src="config.js?v=20260723h"></script>
-  <script src="script.js?v=20260723-map-cross-fix"></script>
-  <script src="music.js?v=20260723h"></script>
-  <script src="rsvp.js?v=20260723h"></script>
+  <script src="config.js?v=20260724k"></script>
+  <script src="script.js?v=20260724k"></script>
+  <script src="music.js?v=20260724k"></script>
+  <script src="rsvp.js?v=20260724k"></script>
 </body>
 </html>
