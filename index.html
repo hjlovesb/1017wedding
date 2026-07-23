@@ -21,7 +21,7 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=20260723v14" />
 
   <!-- Intro / Thankyou image preload -->
   <link rel="preload" as="image" href="images/intro/intro-bg.png" />
@@ -53,7 +53,7 @@
   <audio id="bgm" src="audio/bgm.mp3" preload="auto" autoplay playsinline></audio>
 
   <button class="music-toggle" id="music-toggle" type="button" aria-label="음악 켜기/끄기">
-    <span class="music-toggle__icon" aria-hidden="true">♪</span>
+    <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
   </button>
 
 
@@ -99,10 +99,19 @@
     <section class="section greeting" id="greeting">
       <div class="section__inner anim-target">
         <h2 class="section__title script-font" id="greeting-title"></h2>
+        <img class="greeting__rose" src="images/greeting/rose.png" alt="" aria-hidden="true" loading="lazy" decoding="async" draggable="false" />
+        <p class="greeting__poem" id="greeting-poem"></p>
         <p class="greeting__text" id="greeting-text"></p>
-        <div class="greeting__parents" id="greeting-parents"></div>
       </div>
       <div class="floral-divider"></div>
+    </section>
+
+    <!-- ── Our Beginning: 혼주 · 신랑신부 (버터크림 섹션) ── -->
+    <section class="section beginning" id="beginning">
+      <div class="section__inner anim-target">
+        <h2 class="section__title script-font">Our Beginning</h2>
+        <div class="greeting__parents greeting__parents--beginning" id="greeting-parents"></div>
+      </div>
     </section>
 
     <!-- ── Calendar Section ── -->
@@ -112,40 +121,58 @@
         <div class="calendar" id="calendar"></div>
       </div>
     </section>
-    <!-- ── Our Story: 유색 패널 안, 벽에 건 두 액자 + 나비 피날레 ── -->
+    <!-- ── Our Story: 뒤집히는 엽서 ── -->
     <section class="section ourstory" id="letter">
-      <div class="section__inner anim-target">
+      <div class="section__inner">
 
-        <p class="ourstory__eyebrow">OUR STORY</p>
+        <h2 class="section__title script-font" data-reveal>Our Story</h2>
 
-        <div class="ourstory__panel">
-          <div class="storyframes">
-            <!-- 2024 · 은색 액자 (왼쪽) -->
-            <figure class="storyframe storyframe--left" data-reveal>
-              <p class="storyframe__yearline storyframe__yearline--left" aria-hidden="true">2024</p>
-              <div class="storyframe__img">
-                <img src="images/story/story-2024.png" alt="2024년 상빈이 현준에게 쓴 자필 편지가 담긴 액자" loading="lazy" decoding="async" draggable="false" />
+        <div class="cards" id="story-cards" data-reveal>
+          <div class="cards__stage">
+
+            <div class="card is-current" data-card="0">
+              <div class="card__inner">
+                <div class="card__face card__face--front">
+                  <img src="images/postcard/2024-front.jpg" alt="신부 박상빈" decoding="async" draggable="false" />
+                </div>
+                <div class="card__face card__face--back">
+                  <img src="images/postcard/2024-back.jpg" alt="2024년 신부가 신랑에게 쓴 편지" decoding="async" draggable="false" />
+                </div>
               </div>
-            </figure>
+            </div>
 
-            <!-- 2025 · 하늘색 액자 (오른쪽·가로형) -->
-            <figure class="storyframe storyframe--right storyframe--wide" data-reveal>
-              <p class="storyframe__yearline storyframe__yearline--right" aria-hidden="true">2025</p>
-              <div class="storyframe__img">
-                <img src="images/story/story-2025.png" alt="2025년 현준이 상빈에게 쓴 자필 편지가 담긴 액자" loading="lazy" decoding="async" draggable="false" />
+            <div class="card" data-card="1">
+              <div class="card__inner">
+                <div class="card__face card__face--front">
+                  <img src="images/postcard/2025-front.jpg" alt="신랑 이현준" decoding="async" draggable="false" />
+                </div>
+                <div class="card__face card__face--back">
+                  <img src="images/postcard/2025-back.jpg" alt="2025년 신랑이 신부에게 쓴 편지" decoding="async" draggable="false" />
+                </div>
               </div>
-            </figure>
+            </div>
+
+            <div class="card card--last" data-card="2">
+              <div class="card__inner">
+                <div class="card__face card__face--front">
+                  <img src="images/postcard/2026-front.jpg" alt="신랑 신부" decoding="async" draggable="false" />
+                  <span class="card__yr">2026</span>
+                </div>
+                <div class="card__face card__face--back card__face--plain">
+                  <span class="card__yr card__yr--back">2026</span>
+                  <span class="card__closing">그리고, 영원이라는 계절로</span>
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          <!-- 2026 · 나비 피날레 -->
-          <div class="finale2026" id="rings-finale">
-            <div class="bf-stage" aria-hidden="true" id="bf-stage">
-              <div class="bf-stack" id="footer-wine-frames"><img src="images/footer/00.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:1!important" /><img src="images/footer/01.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/02.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/03.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/04.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/05.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/06.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/07.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/08.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/09.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/10.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/11.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/12.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/13.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/14.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/15.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/16.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/17.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/18.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/19.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/20.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /></div>
-              <div class="bf-glow"></div>
-              <div class="bf-vig"></div>
-            </div>
-            <p class="finale2026__year">2026. 10. 17</p>
-            <p class="finale2026__text">그리고, 영원이라는 계절로</p>
+          <p class="cards__hint" id="cards-hint">엽서를 눌러 뒤집어 보세요</p>
+
+          <div class="cards__nav">
+            <button class="cards__arrow" id="cards-prev" type="button" aria-label="이전 엽서">&#8249;</button>
+            <span class="cards__dots" id="cards-dots" aria-hidden="true"></span>
+            <button class="cards__arrow" id="cards-next" type="button" aria-label="다음 엽서">&#8250;</button>
           </div>
         </div>
 
@@ -157,8 +184,12 @@
     <section class="section gallery" id="gallery">
       <div class="section__inner anim-target">
         <h2 class="section__title script-font">Gallery</h2>
+        <div class="gallery__labels" aria-hidden="true">
+          <span>Our Story</span>
+          <span>Wedding Photo</span>
+        </div>
       </div>
-      <div class="gallery__grid" id="gallery-grid"></div>
+      <div class="gallery__grid" id="gallery-grid" style="display:block;min-height:390px"></div>
       <div class="floral-divider"></div>
     </section>
 
@@ -210,29 +241,45 @@
           </button>
           <div class="accordion__body" id="acc-bride-body"></div>
         </div>
+
+        <!-- 주소 복사 · 카카오톡 공유 -->
+        <div class="share-buttons cel-share">
+          <button class="share-btn share-btn--cel" id="btn-copy-address-bottom" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <span>주소 복사</span>
+          </button>
+          <button class="share-btn share-btn--cel" id="btn-kakao-share" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.54 2 10.9c0 2.8 1.86 5.26 4.66 6.66-.15.52-.96 3.32-.99 3.54 0 0-.02.17.09.23.11.07.24.02.24.02.32-.05 3.66-2.4 4.24-2.81.57.08 1.16.13 1.76.13 5.52 0 10-3.54 10-7.9S17.52 3 12 3z"/></svg>
+            <span>카카오톡 공유</span>
+          </button>
+        </div>
       </div>
     </section>
 
-    <!-- ── Footer: 와인빛 피날레 — 백조 프레임 애니메이션 + 이름/날짜 + 공유 버튼 ── -->
+    <!-- ── Footer: 연베이지 배경 위 나비 사진(원본 크기) + 하단으로 갈수록 진해지는 톤
+         공유 버튼은 나비 사진이 끝나는 아래에 여유 있게 배치됩니다. ── -->
+    <!-- ── 와인 피날레: 나비가 날갯짓하는 마무리 ── -->
     <div class="footer-wine2" aria-label="마무리">
-      <div class="footer-wine2__lake" id="footer-swan-stage" aria-hidden="true">
-        <div class="footer-wine2__lake-stack" id="footer-swan-frames"><img src="images/footer/swan-seq-00.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:1!important" /><img src="images/footer/swan-seq-01.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-02.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-03.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-04.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-05.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-06.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-07.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-08.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-09.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-10.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /><img src="images/footer/swan-seq-11.png" alt="" loading="lazy" decoding="async" draggable="false" style="opacity:0!important" /></div>
-        <div class="footer-wine2__lake-glow"></div>
-        <div class="footer-wine2__lake-vignette"></div>
-      </div>
+      <figure class="tray" aria-hidden="true">
+        <img src="images/finale/tray.jpg" alt="" decoding="async" draggable="false" />
+      </figure>
 
-      <p class="footer-wine2__names">이현준 &middot; 박상빈</p>
-      <p class="footer-wine2__date">2026. 10. 17.</p>
+      <div class="fsign">
+        <span class="fsign__rule" aria-hidden="true"></span>
 
-      <div class="share-buttons footer-wine2__share">
-        <button class="share-btn share-btn--wine" id="btn-copy-address-bottom" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          <span>주소 복사</span>
-        </button>
-        <button class="share-btn share-btn--wine" id="btn-kakao-share" type="button">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C6.48 3 2 6.54 2 10.9c0 2.8 1.86 5.26 4.66 6.66-.15.52-.96 3.32-.99 3.54 0 0-.02.17.09.23.11.07.24.02.24.02.32-.05 3.66-2.4 4.24-2.81.57.08 1.16.13 1.76.13 5.52 0 10-3.54 10-7.9S17.52 3 12 3z"/></svg>
-          <span>카카오톡 공유</span>
-        </button>
+        <p class="fsign__names">
+          <span class="fsign__name">이현준</span>
+          <span class="fsign__amp" aria-hidden="true">&amp;</span>
+          <span class="fsign__name">박상빈</span>
+        </p>
+
+        <p class="fsign__date">
+          <span>2026</span><i aria-hidden="true"></i><span>10</span><i aria-hidden="true"></i><span>17</span>
+        </p>
+
+        <p class="fsign__venue">나비스퀘어 나비홀</p>
+
+        <span class="fsign__rule fsign__rule--bottom" aria-hidden="true"></span>
       </div>
     </div>
 
@@ -254,56 +301,50 @@
     </button>
   </div>
 
-  <!-- ========== Attendance RSVP Modal - Editorial Soft Blue ========== -->
+  <!-- ========== Attendance RSVP Modal — 카드형 ========== -->
   <div class="rsvp-modal" id="attendModal" aria-hidden="true">
     <div class="rsvp-modal__backdrop" data-rsvp-close></div>
 
     <section class="rsvp-modal__panel" role="dialog" aria-modal="true" aria-labelledby="rsvp-title">
       <button class="rsvp-modal__close" id="rsvp-close" type="button" aria-label="닫기">&times;</button>
 
-      <h2 class="rsvp-modal__title" id="rsvp-title">참석 여부</h2>
-      <p class="rsvp-modal__summary">
-        <strong><span id="rsvp-groom-name">이현준</span> &amp; <span id="rsvp-bride-name">박상빈</span></strong><br />
-        <span id="rsvp-date-text">2026.10.17. 토요일 오후 4시 20분</span><br />
-        <span id="rsvp-venue-text">나비스퀘어 나비홀</span>
-      </p>
+      <div class="rsvp-card">
+        <p class="rsvp-modal__date" id="rsvp-title">2026. 10. 17 (토) 오후 4시 20분</p>
 
-      <form class="rsvp-form" id="rsvp-form">
-        <label class="rsvp-label" for="rsvp-name">성함</label>
-        <input class="rsvp-input" id="rsvp-name" name="name" type="text" placeholder="예) 홍길동" maxlength="20" autocomplete="name" required />
+        <p class="rsvp-modal__summary">
+          참석해 주시는 분들을<br />
+          소중히 모시고자 합니다.<br />
+          참석여부를 알려주시면 감사하겠습니다.
+        </p>
 
-        <div class="rsvp-choice-group" role="radiogroup" aria-label="참석 여부">
-          <input id="rsvp-attend" name="attendance" type="radio" value="attend" checked />
-          <label for="rsvp-attend">참석</label>
+        <form class="rsvp-form" id="rsvp-form">
+          <input class="rsvp-input" id="rsvp-name" name="name" type="text" placeholder="성함" maxlength="20" autocomplete="name" required />
 
-          <input id="rsvp-absent" name="attendance" type="radio" value="absent" />
-          <label for="rsvp-absent">불참</label>
-        </div>
+          <div class="rsvp-choice-group" role="radiogroup" aria-label="참석 여부">
+            <input id="rsvp-attend" name="attendance" type="radio" value="attend" checked />
+            <label for="rsvp-attend">참석</label>
 
-        <div class="rsvp-counter" id="rsvp-counter" aria-label="참석 인원 선택">
-          <button type="button" id="rsvp-minus" aria-label="참석 인원 감소">−</button>
-          <span id="rsvp-count" data-count="1">1명</span>
-          <button type="button" id="rsvp-plus" aria-label="참석 인원 증가">＋</button>
-        </div>
-        <p class="rsvp-help" id="rsvp-help">본인 포함 참석 인원</p>
+            <input id="rsvp-absent" name="attendance" type="radio" value="absent" />
+            <label for="rsvp-absent">불참</label>
+          </div>
 
-        <button class="rsvp-submit" id="rsvp-submit" type="submit">전달하기</button>
+          <button class="rsvp-submit" id="rsvp-submit" type="submit">전달하기</button>
+
+          <p class="rsvp-message" id="rsvp-message" aria-live="polite"></p>
+        </form>
 
         <label class="rsvp-hide-today">
-          <input id="rsvp-hide-today" type="checkbox" />
+          <input id="rsvp-hide-today" type="checkbox" autocomplete="off" />
           <span>오늘 하루 보지 않기</span>
         </label>
-
-        <p class="rsvp-message" id="rsvp-message" aria-live="polite"></p>
-      </form>
+      </div>
     </section>
   </div>
 
-
   <!-- Scripts -->
-  <script src="config.js"></script>
-  <script src="script.js"></script>
-  <script src="music.js"></script>
-  <script src="rsvp.js"></script>
+  <script src="config.js?v=20260723v12"></script>
+  <script src="script.js?v=20260723v18"></script>
+  <script src="music.js?v=20260723v12"></script>
+  <script src="rsvp.js?v=20260723v12"></script>
 </body>
 </html>

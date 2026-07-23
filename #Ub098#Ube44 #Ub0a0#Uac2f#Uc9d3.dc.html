@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ext-resource-dependency" content="frames/j01.jpg">
+<meta name="ext-resource-dependency" content="frames/j02.jpg">
+<meta name="ext-resource-dependency" content="frames/j03.jpg">
+<meta name="ext-resource-dependency" content="frames/j04.jpg">
+<meta name="ext-resource-dependency" content="frames/j05.jpg">
+<meta name="ext-resource-dependency" content="frames/j06.jpg">
+<meta name="ext-resource-dependency" content="frames/j07.jpg">
+<meta name="ext-resource-dependency" content="frames/j08.jpg">
+<meta name="ext-resource-dependency" content="frames/j09.jpg">
+<meta name="ext-resource-dependency" content="frames/j10.jpg">
+<meta name="ext-resource-dependency" content="frames/j11.jpg">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<style>
+@keyframes wingfade {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  14% { opacity: 1; }
+  24% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes slowdrift {
+  0% { transform: scale(1.04) translate(0px, 0px) rotate(0deg); }
+  33% { transform: scale(1.065) translate(3px, -5px) rotate(0.4deg); }
+  66% { transform: scale(1.075) translate(-3px, -7px) rotate(-0.4deg); }
+  100% { transform: scale(1.04) translate(0px, 0px) rotate(0deg); }
+}
+body { margin: 0; background: transparent; }
+.wingstack img { position: absolute; left: 50%; top: 50%; width: 340px; height: 510px; margin: -255px 0 0 -170px; object-fit: cover; object-position: 50% 38%; opacity: 0; animation: wingfade var(--cy, 23s) linear infinite; filter: sepia(0.42) saturate(0.62) contrast(0.94) brightness(1.07); }
+a { color: #8a8478; } a:hover { color: #6f6a5f; }
+</style>
+</helmet>
+<div style="width: 100%; display: flex; align-items: center; justify-content: center; background: transparent; font-family: Georgia, 'Times New Roman', serif;">
+  <div style="width: 420px; max-width: 100vw; padding: 48px 0 56px 0; display: flex; flex-direction: column; align-items: center; gap: 28px;">
+    <div style="position: relative; width: 340px; height: 470px;">
+      <div style="position: absolute; inset: 0; overflow: hidden; -webkit-mask-image: radial-gradient(ellipse 62% 58% at 50% 46%, black 52%, transparent 82%); mask-image: radial-gradient(ellipse 62% 58% at 50% 46%, black 52%, transparent 82%);">
+        <div class="wingstack" style="position: absolute; inset: 0; animation: slowdrift 26s ease-in-out infinite; --cy: {{ dur }};">
+          <img src="frames/j01.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0);"></img>
+          <img src="frames/j02.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.0909);"></img>
+          <img src="frames/j03.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.1818);"></img>
+          <img src="frames/j04.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.2727);"></img>
+          <img src="frames/j05.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.3636);"></img>
+          <img src="frames/j06.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.4545);"></img>
+          <img src="frames/j07.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.5455);"></img>
+          <img src="frames/j08.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.6364);"></img>
+          <img src="frames/j09.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.7273);"></img>
+          <img src="frames/j10.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.8182);"></img>
+          <img src="frames/j11.jpg" alt="" style="animation-delay: calc(var(--cy, 23s) * 0.9091);"></img>
+        </div>
+        <div style="position: absolute; inset: 0; background: #ecdfc4; mix-blend-mode: soft-light; opacity: 0.5; pointer-events: none;"></div>
+      </div>
+    </div>
+    <sc-if value="{{ showCaption }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: -34px;">
+        <div style="width: 26px; height: 1px; background: #c9b48f;"></div>
+        <div style="font-size: 13px; letter-spacing: 0.35em; text-indent: 0.35em; color: #e3d3b3; text-transform: uppercase;">Butterfly Wingbeats</div>
+        <div style="font-size: 12px; letter-spacing: 0.12em; color: #c4ae8b;">두 마리의 나비가, 서로에게 닿기까지</div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:640},&quot;cycleSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:23,&quot;min&quot;:6,&quot;max&quot;:30,&quot;step&quot;:1,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;모션&quot;},&quot;showCaption&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;내용&quot;}}">
+
+class Component extends DCLogic {
+  renderVals() {
+    const n = 11;
+    const cycle = this.props.cycleSeconds ?? 14;
+    const frames = [];
+    for (let i = 1; i <= n; i++) {
+      frames.push({
+        src: 'frames/f' + String(i).padStart(2, '0') + '.png',
+        delay: (i - 1) * (cycle / n) + 's'
+      });
+    }
+    return { frames, dur: cycle + 's', showCaption: this.props.showCaption ?? true };
+  }
+}
+
+</script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#5a2233"></rect><g fill="#e9dfc8"><ellipse cx="42" cy="48" rx="12" ry="8" transform="rotate(-30 42 48)"></ellipse><ellipse cx="58" cy="48" rx="12" ry="8" transform="rotate(30 58 48)"></ellipse><rect x="48.6" y="42" width="2.8" height="16" rx="1.4"></rect></g></svg></template>
+</body>
+</html>

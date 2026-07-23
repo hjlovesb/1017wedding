@@ -23,6 +23,7 @@ const CONFIG = {
  name: "현준",
     lastName: "이",
     fullName: "이현준",
+    nameEn: "YIH HYEONJUN",
     father: "이광원",
     mother: "남미숙"
 
@@ -32,6 +33,7 @@ const CONFIG = {
     name: "상빈",
     lastName: "박",
     fullName: "박상빈",
+    nameEn: "PARK SANGBIN",
     father: "박경순",
     mother: "김희자"
   },
@@ -54,9 +56,9 @@ const CONFIG = {
 
   // ── 인사말 ──
   greeting: {
-    title: "2026.10.17.",
+    title: "INVITATION",
     content:
-      "무르익은 가을에 만나\n다시맞은 두번째 가을\n\n영원이라는 계절을 함께 하고자 합니다.\n\n따뜻한 마음으로 오셔서\n저희의 시작을 함께 축복해 주시면 감사하겠습니다.",
+      "당신이 그꽃이였으면\n아침마다 그꽃 손에들고\n사랑하지 않는날 없어라\n-  만요수  -\n\n\n서로의 하루에 피어나는 꽃이 되어\n평범한 날들을 오래 아끼며 살아가겠습니다.\n저희 두 사람이 함께하는 첫걸음의 자리에\n정중히 초대합니다",
   },
 
   // ── 지도 ──

@@ -22,6 +22,7 @@
     const helpEl = document.getElementById('rsvp-help');
     const hideToday = document.getElementById('rsvp-hide-today');
     const nameInput = document.getElementById('rsvp-name');
+
     const STORAGE_KEY = 'wedding_rsvp_hide_date';
 
     function todayStamp() {
@@ -78,18 +79,21 @@
     }
 
     window.openAttendModal = function () {
-      if (shouldHideToday()) return;
+      if (shouldHideToday()) return false;
       modal.classList.add('show');
       modal.setAttribute('aria-hidden', 'false');
+      if (hideToday) hideToday.checked = false;   // 새로고침 시 체크 상태가 남지 않도록
       updateCounterState();
       resetMessage();
-      setTimeout(() => { if (nameInput) nameInput.focus(); }, 60);
+      return true;
     };
 
     function closeModal() {
       storeHideToday();
       modal.classList.remove('show');
       modal.setAttribute('aria-hidden', 'true');
+      // 팝업이 닫힌 뒤에 본문 모션이 시작됩니다.
+      window.dispatchEvent(new CustomEvent('rsvp:closed'));
     }
 
     if (closeBtn) closeBtn.addEventListener('click', closeModal);

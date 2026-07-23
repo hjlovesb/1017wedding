@@ -200,15 +200,19 @@ function initCurtain() {
   let autoTimer = null;
 
   function showAttendPopup() {
+    let opened = false;
     if (typeof window.openAttendModal === 'function') {
-      window.openAttendModal();
-      return;
+      opened = window.openAttendModal() !== false;
+    } else {
+      const modal = document.getElementById('attendModal');
+      if (modal) {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+        opened = true;
+      }
     }
-    const modal = document.getElementById('attendModal');
-    if (modal) {
-      modal.classList.add('show');
-      modal.setAttribute('aria-hidden', 'false');
-    }
+    // 팝업이 뜨지 않는 상황(오늘 하루 보지 않기 등)이면 곧바로 본문 모션 시작
+    if (!opened) markReady();
   }
 
   function revealMainBehindIntro() {
@@ -258,7 +262,7 @@ function initCurtain() {
     });
 
     hideTimer = setTimeout(hideIntroCompletely, 1580);
-    popupTimer = setTimeout(showAttendPopup, 2380);
+    popupTimer = setTimeout(showAttendPopup, 260);
   }
 
   curtain.classList.add('is-ready');
@@ -338,20 +342,132 @@ function initCurtain() {
       dateEl.textContent = `${y}년 ${+m}월 ${+d}일 ${w.dayOfWeek} ${ampm} ${h12}시${+mm ? ' ' + +mm + '분' : ''}`;
     }
 
+    // 예식장 + 홀 이름을 함께 (예: 나비스퀘어 나비홀)
     const venue = $('#hero-venue');
-    if (venue) venue.textContent = w.venue;
+    if (venue) {
+      venue.innerHTML = w.hall
+        ? `${w.venue} <span class="hero__hall">${w.hall}</span>`
+        : w.venue;
+    }
+
+    // 최상단 와인박스 안의 "Wedding Day." → 마침표 제거
+    const heroSec = document.getElementById('hero');
+    if (heroSec) {
+      heroSec.querySelectorAll('p, span, h1, h2, h3, small, em, i, b').forEach((el) => {
+        if (el.children.length) return;
+        const t = (el.textContent || '').trim();
+        if (/^wedding\s*day\s*[.·・]?$/i.test(t)) el.textContent = 'Wedding Day';
+      });
+    }
   }
 
  
 
   /* ── Greeting ── */
+  /* ── 순차 등장: 소제목 → 첫 틀 → 둘째 틀이 차례로, 은은하게 ──
+     섹션이 화면에 들어오면 data-reveal-order 순서대로 지연시켜
+     페이드업합니다. Our Beginning의 "소제목 → 현준 틀 → 상빈 틀" 흐름에 씁니다. */
+  function initSequentialReveal(section) {
+    if (!section) return;
+    const title = section.querySelector('.section__title');
+    const items = Array.from(section.querySelectorAll('[data-reveal]'));
+    if (title) { title.classList.add('seq-reveal'); title.style.setProperty('--seq-delay', '0ms'); }
+    items.forEach((el) => {
+      const order = Number(el.getAttribute('data-reveal-order')) || 1;
+      el.classList.add('seq-reveal');
+      el.style.setProperty('--seq-delay', `${150 + order * 340}ms`);
+    });
+
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      if (title) title.classList.add('is-in');
+      items.forEach((el) => el.classList.add('is-in'));
+      return;
+    }
+
+    const showAll = () => {
+      if (title) title.classList.add('is-in');
+      items.forEach((el) => el.classList.add('is-in'));
+    };
+
+    const start = () => {
+      if (!('IntersectionObserver' in window)) { showAll(); return; }
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            showAll();
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' });
+      io.observe(section);
+    };
+
+    whenReady(start);
+  }
+
+  /* 인트로(봉투)와 참석 여부 팝업이 모두 닫힌 뒤에 본문 모션을 시작합니다. */
+  function whenReady(fn) {
+    if (window.__invitationReady) { fn(); return; }
+    window.addEventListener('invitation:ready', fn, { once: true });
+  }
+
+  function markReady() {
+    if (window.__invitationReady) return;
+    window.__invitationReady = true;
+    window.dispatchEvent(new CustomEvent('invitation:ready'));
+  }
+  window.__markInvitationReady = markReady;
+
+  // 팝업을 닫으면 그때 본문 모션이 시작됩니다.
+  window.addEventListener('rsvp:closed', markReady);
+  // 어떤 이유로든 팝업이 뜨지 않으면 안전하게 열어 둡니다.
+  setTimeout(markReady, 9000);
+
   function initGreeting() {
     const title = $('#greeting-title');
     const text = $('#greeting-text');
     const parents = $('#greeting-parents');
 
     if (title) title.textContent = CONFIG.greeting.title;
-    if (text) text.textContent = CONFIG.greeting.content;
+
+    // 시(만요수)와 초대 문구를 나눠서 순차적으로 등장시킵니다.
+    const poemEl = $('#greeting-poem');
+    const raw = String(CONFIG.greeting.content || '');
+    const parts = raw.split(/\n\s*\n\s*\n?/);
+
+    let inviteRaw = raw;
+    if (poemEl && parts.length > 1) {
+      poemEl.textContent = parts[0].trim();
+      inviteRaw = parts.slice(1).join('\n\n').trim();
+    }
+
+    const escapeHtml = (s) => String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 초대글을 한 줄씩 나누어, 한 줄 한 줄 차례로 떠오르게 합니다.
+    const inviteLines = inviteRaw.split('\n').map((s) => s.trim()).filter(Boolean);
+    if (text) {
+      if (inviteLines.length > 1) {
+        text.innerHTML = inviteLines
+          .map((ln, i) => {
+            const order = (3.4 + i * 0.95).toFixed(2);
+            return `<span class="gline" data-reveal data-reveal-order="${order}">${escapeHtml(ln)}</span>`;
+          })
+          .join('');
+        text.classList.add('greeting__text--lines');
+      } else {
+        text.textContent = inviteRaw;
+        text.setAttribute('data-reveal', '');
+        text.setAttribute('data-reveal-order', '4');
+      }
+    }
+
+    // 장미 → 시 → 초대문구(한 줄씩) 순으로 은은하게
+    const rose = document.querySelector('.greeting__rose');
+    if (rose) { rose.setAttribute('data-reveal',''); rose.setAttribute('data-reveal-order','1'); }
+    if (poemEl) { poemEl.setAttribute('data-reveal',''); poemEl.setAttribute('data-reveal-order','2'); }
+    initSequentialReveal(document.getElementById('greeting'));
 
     if (parents) {
       const g = CONFIG.groom;
@@ -364,16 +480,28 @@ function initCurtain() {
       };
 
       parents.innerHTML = `
-        <span class="parent-line">
-          ${makeName(g.father, g.fatherDeceased)} &middot; ${makeName(g.mother, g.motherDeceased)}
-          <em>의 ${g.lastName === g.father?.charAt(0) ? '아들' : '아들'}</em> <strong>${g.name}</strong>
+        <div class="obeg" data-reveal data-reveal-order="1">
+          <p class="obeg__parents">${makeName(g.father, g.fatherDeceased)} &middot; ${makeName(g.mother, g.motherDeceased)} <em>의 아들</em></p>
+          <p class="obeg__name">${g.fullName || g.name}</p>
+          <p class="obeg__en">${g.nameEn || ''}</p>
+        </div>
+        <span class="obeg__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path class="obeg__spark obeg__spark--main"
+                  d="M12 0.6 C12.5 7.2 16.8 11.5 23.4 12 C16.8 12.5 12.5 16.8 12 23.4 C11.5 16.8 7.2 12.5 0.6 12 C7.2 11.5 11.5 7.2 12 0.6 Z"
+                  fill="currentColor" />
+            <path class="obeg__spark obeg__spark--sub"
+                  d="M12 6.6 C12.25 9.7 14.3 11.75 17.4 12 C14.3 12.25 12.25 14.3 12 17.4 C11.75 14.3 9.7 12.25 6.6 12 C9.7 11.75 11.75 9.7 12 6.6 Z"
+                  fill="currentColor" />
+          </svg>
         </span>
-        <span class="parent-dot">&amp;</span>
-        <span class="parent-line">
-          ${makeName(b.father, b.fatherDeceased)} &middot; ${makeName(b.mother, b.motherDeceased)}
-          <em>의 딸</em> <strong>${b.name}</strong>
-        </span>
+        <div class="obeg" data-reveal data-reveal-order="2">
+          <p class="obeg__parents">${makeName(b.father, b.fatherDeceased)} &middot; ${makeName(b.mother, b.motherDeceased)} <em>의 딸</em></p>
+          <p class="obeg__name">${b.fullName || b.name}</p>
+          <p class="obeg__en">${b.nameEn || ''}</p>
+        </div>
       `;
+      initSequentialReveal(parents.closest('section'));
     }
   }
 
@@ -391,84 +519,96 @@ async function initCalendar() {
   const [hh, mm] = CONFIG.wedding.time.split(':').map(Number);
 
   const lastDay = new Date(y, m, 0).getDate();
-  const startDow = new Date(y, m - 1, 1).getDay();
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dowEn = DAYS[new Date(y, m - 1, d).getDay()];
 
-  const ampm = hh < 12 ? '오전' : '오후';
-  const h12 = hh % 12 || 12;
-  const timeText = `${CONFIG.wedding.dayOfWeek} ${ampm} ${h12}시${mm ? ' ' + mm + '분' : ''}`;
+  // 1~말일을 9개씩 한 줄로 (레퍼런스 스타일)
+  // 요일에 맞춘 7열 배치 — 17일(토)이 맨 오른쪽 열에 놓입니다
+  const firstDow = new Date(y, m - 1, 1).getDay();   // 0=일요일
 
   let cells = '';
-  for (let i = 0; i < startDow; i++) cells += '<span class="wcal__day is-empty"></span>';
+  for (let i = 0; i < firstDow; i++) cells += '<span class="dcal__day is-blank"></span>';
   for (let day = 1; day <= lastDay; day++) {
-    const dow = new Date(y, m - 1, day).getDay();
-    const isSun = dow === 0 ? ' is-sun' : '';
-    const isWed = day === d ? ' is-wedding' : '';
-    cells += `<span class="wcal__day${isSun}${isWed}">${day}</span>`;
+    const dow = (firstDow + day - 1) % 7;
+    const cls = (day === d ? ' is-wedding' : '') + (dow === 0 ? ' is-sun' : '');
+    cells += `<span class="dcal__day${cls}">${day}</span>`;
   }
 
   el.innerHTML = `
-    <div class="wcal">
-      <div class="wcal__summary">
-        <p class="wcal__date">${y}. ${String(m).padStart(2,'0')}. ${String(d).padStart(2,'0')}</p>
-        <p class="wcal__sub">${timeText}</p>
+    <div class="dcal">
+      <div class="dcal__photo" id="dcal-photo">
+        <img id="dcal-photo-img" src="" alt="웨딩 사진" loading="lazy" decoding="async" draggable="false" />
       </div>
-      <div class="wcal__weekdays">
-        <span class="is-sun">S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-      </div>
-      <div class="wcal__grid">${cells}</div>
-    </div>
-    <div class="wtimer" id="wtimer" aria-label="결혼식까지 남은 시간">
-      <span class="wtimer__u"><b id="wt-d">0</b><i>DAYS</i></span>
-      <em class="wtimer__s">:</em>
-      <span class="wtimer__u"><b id="wt-h">0</b><i>HRS</i></span>
-      <em class="wtimer__s">:</em>
-      <span class="wtimer__u"><b id="wt-m">0</b><i>MIN</i></span>
-      <em class="wtimer__s">:</em>
-      <span class="wtimer__u"><b id="wt-s">0</b><i>SEC</i></span>
-    </div>
-    <div class="wcount" id="wcount" aria-live="polite">
-      <span class="wcount__name">현준</span>
-      <img class="wcount__swan" src="swan-divider.png" alt="사랑" />
-      <span class="wcount__name">상빈</span>
-      <span class="wcount__message"><span class="wcount__days">0</span>일 남았습니다</span>
+      <p class="dcal__month script-font" aria-hidden="true">${MONTHS[m - 1]}</p>
+      <div class="dcal__grid">${cells}</div>
+      <p class="dcal__dateline">${dowEn}, ${MONTHS[m - 1]} ${d}, ${y}</p>
+      <p class="dcal__dday">결혼식까지 <b id="dcal-days">0</b>일 남았습니다</p>
     </div>
   `;
 
-  // ── 디데이: 슬림 타이머(일:시:분:초) + "결혼식까지 N일" 알약 ──
+  // 사진: images/calendar/1.* 자동 감지, 없으면 사진 영역 숨김
+  let photoReady = Promise.resolve();
+  const photoImg = document.getElementById('dcal-photo-img');
+  if (photoImg) {
+    const src = await resolveFirstImage([
+      'images/calendar/1.png', 'images/calendar/1.jpg', 'images/calendar/1.jpeg'
+    ]);
+    photoImg.src = src;
+    photoImg.addEventListener('error', () => {
+      const box = document.getElementById('dcal-photo');
+      if (box) box.style.display = 'none';
+    }, { once: true });
+
+    // 이미지가 완전히 그려진 뒤에 등장시켜야 뚝 끊기지 않습니다
+    photoReady = (photoImg.complete && photoImg.naturalWidth)
+      ? Promise.resolve()
+      : new Promise((res) => {
+          photoImg.addEventListener('load', () => {
+            if (photoImg.decode) { photoImg.decode().then(res).catch(res); } else { res(); }
+          }, { once: true });
+          photoImg.addEventListener('error', res, { once: true });
+          setTimeout(res, 2500);
+        });
+  }
+
+  // 남은 일수
   const target = new Date(y, m - 1, d, hh, mm, 0).getTime();
-  const wcountEl = document.getElementById('wcount');
-  const tD = document.getElementById('wt-d');
-  const tH = document.getElementById('wt-h');
-  const tM = document.getElementById('wt-m');
-  const tS = document.getElementById('wt-s');
+  const daysEl = document.getElementById('dcal-days');
   function tickDday() {
-    let diff = target - Date.now();
-    if (diff < 0) diff = 0;
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff / 3600000) % 24);
-    const minutes = Math.floor((diff / 60000) % 60);
-    const seconds = Math.floor((diff / 1000) % 60);
-    if (tD) tD.textContent = days;
-    if (tH) tH.textContent = String(hours).padStart(2, '0');
-    if (tM) tM.textContent = String(minutes).padStart(2, '0');
-    if (tS) tS.textContent = String(seconds).padStart(2, '0');
-    if (wcountEl) {
-      const daysEl = wcountEl.querySelector('.wcount__days');
-      const messageEl = wcountEl.querySelector('.wcount__message');
-      if (days > 0) {
-        if (daysEl) daysEl.textContent = days;
-        if (messageEl) messageEl.innerHTML = `결혼식까지 <span class="wcount__days">${days}</span>일 남았습니다`;
-      } else if (diff > 0) {
-        if (messageEl) messageEl.textContent = '결혼식이 곧 시작됩니다';
-      } else if ((Date.now() - target) < 86400000) {
-        if (messageEl) messageEl.textContent = '오늘, 저희 결혼합니다';
-      } else {
-        if (messageEl) messageEl.textContent = '함께해 주셔서 감사합니다';
-      }
-    }
+    if (!daysEl) return;
+    const diff = target - Date.now();
+    const days = Math.max(0, Math.ceil(diff / 86400000));
+    daysEl.textContent = days;
   }
   tickDday();
-  setInterval(tickDday, 1000);
+  setInterval(tickDday, 60000);
+
+  /* ── 스크롤로 이 영역에 닿으면 한 번, 깔끔하게 떠오릅니다 ── */
+  const dcal = el.querySelector('.dcal');
+  if (dcal) {
+    const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reveal = () => {
+      photoReady.then(() => {
+        requestAnimationFrame(() => {
+          dcal.classList.add('is-photo-in');
+          setTimeout(() => dcal.classList.add('is-in'), 620);
+        });
+      });
+    };
+
+    if (prefersReduced || !('IntersectionObserver' in window)) {
+      reveal();
+    } else {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) { reveal(); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.22, rootMargin: '0px 0px -8% 0px' });
+
+      whenReady(() => io.observe(dcal));
+    }
+  }
 }
 
  /* ── Countdown ── */
@@ -510,32 +650,16 @@ async function initCalendar() {
   const section = $('#gallery');
   if (!grid) return;
 
-  grid.innerHTML = `
-    <div class="section-loading">
-      <span class="section-loading__dot"></span>
-      <span class="section-loading__dot"></span>
-      <span class="section-loading__dot"></span>
-    </div>
-  `;
-
-  galleryImages = await loadImagesFromFolder('gallery');
-
-  if (galleryImages.length === 0) {
-    if (section) section.style.display = 'none';
-    return;
+  galleryImages = Array.from({ length: 18 }, (_, i) => `images/gallery/${i + 1}.jpg`);
+  if (section) {
+    section.style.display = 'block';
+    section.style.visibility = 'visible';
+    section.style.opacity = '1';
   }
-
-  grid.innerHTML = galleryImages
-    .map(
-      (src, i) => `
-        <div class="gallery__item" data-index="${i}">
-          <img src="${src}" alt="갤러리 사진 ${i + 1}" loading="lazy" />
-        </div>
-      `
-    )
-    .join('');
-
-  observeNewElements(grid);
+  grid.style.display = 'block';
+  grid.style.visibility = 'visible';
+  grid.style.opacity = '1';
+  grid.innerHTML = '';
 }
 
   /* ── Footer: 나비 사진 겹침 효과 ──
@@ -545,368 +669,369 @@ async function initCalendar() {
      모두 시도합니다. 사용자가 보내준 실제 사진들을 은은하게 겹쳐
      크로스페이드시켜, 나비가 날갯짓하듯 움직이는 느낌을 만듭니다.
      사진 장수에 따라 한 바퀴 도는 시간을 자동으로 조절합니다. */
-  function loadFooterButterflyImages() {
-    return new Promise((resolve) => {
-      const found = [];
-      const extensions = ['jpg', 'png', 'jpeg', 'webp'];
-      const MAX_INDEX = 99;
-      let index = 0;
-      let consecutiveFails = 0;
 
-      function candidateNames(i) {
-        // 00~09처럼 앞자리 0을 붙인 두 자리 표기와, 0/1/2처럼 그냥 숫자 표기를 모두 시도
-        const plain = String(i);
-        const padded = String(i).padStart(2, '0');
-        return padded === plain ? [plain] : [padded, plain];
-      }
+    /* ── 맨하단 백조: 12프레임(백조00~11)이 가우시안 가중치로 겹쳐지며
+     두 백조가 서로에게 다가가 하트를 이루는 왕복(핑퐁) 유영 모션 ── */
+  /* ── 맨하단 나비: 21프레임(00~20)이 가우시안 가중치로 겹쳐지며
+     물 흐르듯 이어지는 날갯짓 (앞으로만 순환) ── */
+  async function initFooterButterflies() { /* 나비 → 게이트로 교체됨 */ }
 
-      function tryIndex(i, nameIdx, extIdx) {
-        if (i > MAX_INDEX || consecutiveFails >= 4) {
-          resolve(found);
-          return;
-        }
-        const names = candidateNames(i);
-        if (nameIdx >= names.length) {
-          // 이 인덱스의 이름 후보를 모두 못 찾음 → 다음 인덱스로
-          consecutiveFails += 1;
-          tryIndex(i + 1, 0, 0);
-          return;
-        }
-        if (extIdx >= extensions.length) {
-          tryIndex(i, nameIdx + 1, 0);
-          return;
-        }
-        const path = `images/footer/${names[nameIdx]}.${extensions[extIdx]}`;
-        const img = new Image();
-        img.onload = () => {
-          found.push(path);
-          consecutiveFails = 0;
-          tryIndex(i + 1, 0, 0);
-        };
-        img.onerror = () => {
-          tryIndex(i, nameIdx, extIdx + 1);
-        };
-        img.src = path;
-      }
+/* ── 갤러리 ──────────────────────────────────────────────────
+   레퍼런스와 같은 구성: 가운데 한 장이 화면을 거의 채우고,
+   양옆 사진이 가장자리에 살짝 걸쳐 보입니다.
 
-      tryIndex(0, 0, 0);
-    });
+   [중앙 정렬] 모든 칸의 폭을 똑같이 맞추고, rail 왼쪽에
+   (화면폭 − 칸폭)/2 만큼 여백을 둡니다. 그래서 translate 0 일 때
+   첫 장이 정확히 화면 중앙에 놓이고, 한 칸씩 이동해도 계속 중앙입니다.
+   (여백이 없어서 전체가 오른쪽으로 밀려 있던 문제를 바로잡았습니다.)
+
+   [이동] CSS @keyframes 한 개가 담당합니다. "이동 → 정지"를 번갈아 넣어
+   스르륵 옮겨간 뒤 잠시 멈춥니다. 마지막 지점의 그림이 시작 지점과
+   완전히 같으므로 이음매도, 되감을 계산도 없습니다. */
+
+
+function initGallerySlider() {
+  const grid = document.querySelector('#gallery-grid');
+  if (!grid || !galleryImages.length) return;
+
+  const GAP = 12;
+  const MOVE_MS = 1080;
+  const HOLD_MS = 1850;
+  const DRAG_THRESHOLD = 3;
+  const SWIPE_THRESHOLD = 28;
+  const copies = 3;
+  const repeated = [];
+
+  for (let c = 0; c < copies; c++) {
+    galleryImages.forEach((src, index) => repeated.push({ src, index }));
   }
 
-  function startFrameCrossfade(stackId, options = {}) {
-    const stack = document.getElementById(stackId);
-    if (!stack) return;
-    const imgs = Array.from(stack.querySelectorAll('img'));
-    if (!imgs.length) return;
-
-    const duration = Number(options.duration) || 12000;
-    const sigma = Number(options.sigma) || 0.88;
-    const floatPx = Number(options.floatPx) || 0;
-    const n = imgs.length;
-
-    imgs.forEach((img, i) => {
-      img.style.setProperty('position', 'absolute', 'important');
-      img.style.setProperty('inset', '0', 'important');
-      img.style.setProperty('width', '100%', 'important');
-      img.style.setProperty('height', '100%', 'important');
-      img.style.setProperty('object-fit', 'cover', 'important');
-      img.style.setProperty('opacity', i === 0 ? '1' : '0', 'important');
-      img.style.setProperty('animation', 'none', 'important');
-    });
-
-    const reduced = false;
-    if (n < 2) return;
-
-    let started = performance.now();
-    function tick(now) {
-      const phase = ((now - started) % duration) / duration * n;
-      for (let i = 0; i < n; i++) {
-        let d = i - phase;
-        if (d > n / 2) d -= n;
-        if (d < -n / 2) d += n;
-        const opacity = Math.exp(-(d * d) / (2 * sigma * sigma));
-        const y = floatPx ? Math.sin((phase + i * 0.38) * 0.65) * floatPx : 0;
-        imgs[i].style.setProperty('opacity', opacity < 0.012 ? '0' : opacity.toFixed(3), 'important');
-        imgs[i].style.setProperty('transform', `translate3d(0, ${y.toFixed(2)}px, 0)`, 'important');
-      }
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  function initFooterButterflies() {
-    const stack = document.getElementById('footer-wine-frames');
-    if (!stack) return;
-    const imgs = Array.from(stack.querySelectorAll('img'));
-    if (!imgs.length) return;
-
-    const order = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,0,1];
-    const paleSlot = {0:1,2:1,5:1,13:1,14:1,16:1,17:1,18:1,19:1,20:1};
-    const range = order.length;
-    const sigF = 0.82;
-    const sigB = 0.50;
-    const speed = 0.0013;
-    let pos = 0;
-    let last = performance.now();
-
-    imgs.forEach((img, i) => {
-      img.style.setProperty('animation', 'none', 'important');
-      img.style.setProperty('opacity', i === order[0] ? '1' : '0', 'important');
-    });
-
-    const reduced = false;
-    if (reduced) return;
-
-    function tick(now) {
-      const dt = now - last;
-      last = now;
-      const factor = paleSlot[Math.round(pos) % range] ? 1.7 : 1;
-      pos = (pos + speed * dt * factor) % range;
-
-      for (let k = 0; k < order.length; k++) {
-        let d = k - pos;
-        if (d > range / 2) d -= range;
-        if (d < -range / 2) d += range;
-        const sigma = d < 0 ? sigB : sigF;
-        const opacity = Math.exp(-(d * d) / (2 * sigma * sigma));
-        imgs[order[k]].style.setProperty('opacity', opacity < 0.01 ? '0' : opacity.toFixed(3), 'important');
-      }
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
-  function initFooterSwanMotion() {
-    const stack = document.getElementById('footer-swan-frames');
-    if (!stack) return;
-    const imgs = Array.from(stack.querySelectorAll('img')).filter(img => /swan-seq-\d+\.png$/i.test(img.getAttribute('src') || ''));
-    if (!imgs.length) return;
-
-    Array.from(stack.querySelectorAll('img')).forEach(img => {
-      const isSeq = /swan-seq-\d+\.png$/i.test(img.getAttribute('src') || '');
-      if (!isSeq) {
-        img.style.setProperty('display', 'none', 'important');
-        img.style.setProperty('opacity', '0', 'important');
-      }
-    });
-
-    const n = imgs.length;
-    const segmentMs = 1280;
-    const cycleMs = n * segmentMs;
-    const start = performance.now();
-
-    imgs.forEach((img, i) => {
-      img.style.setProperty('display', 'block', 'important');
-      img.style.setProperty('animation', 'none', 'important');
-      img.style.setProperty('transition', 'none', 'important');
-      img.style.setProperty('opacity', i === 0 ? '1' : '0', 'important');
-      img.style.setProperty('transform', 'none', 'important');
-      img.style.setProperty('will-change', 'opacity', 'important');
-    });
-    stack.style.setProperty('will-change', 'transform', 'important');
-
-    const reduced = false;
-    if (reduced) return;
-
-    function ease(x) {
-      x = Math.max(0, Math.min(1, x));
-      return x * x * (3 - 2 * x);
-    }
-
-    function tick(now) {
-      const t = (now - start) % cycleMs;
-      const current = Math.floor(t / segmentMs) % n;
-      const next = (current + 1) % n;
-      const local = (t % segmentMs) / segmentMs;
-      const k = ease(local);
-      const opacities = new Array(n).fill(0);
-      opacities[current] = 1 - k;
-      opacities[next] = k;
-
-      for (let i = 0; i < n; i++) {
-        imgs[i].style.setProperty('opacity', opacities[i] <= 0.001 ? '0' : opacities[i].toFixed(3), 'important');
-      }
-
-      const sec = now / 1000;
-      const x = Math.sin(sec * 0.060) * 0.42 + Math.sin(sec * 0.025) * 0.18;
-      const y = Math.sin(sec * 0.082) * 0.78 + Math.cos(sec * 0.034) * 0.24;
-      const rot = Math.sin(sec * 0.028) * 0.012;
-      stack.style.setProperty('transform', `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) rotate(${rot.toFixed(3)}deg)`, 'important');
-
-      requestAnimationFrame(tick);
-    }
-    requestAnimationFrame(tick);
-  }
-
- function initGallerySlider() {
-  const gallery = document.querySelector('#gallery-grid');
-  if (!gallery || !galleryImages.length) return;
-
-  const N = galleryImages.length;
-  const prefersReduced = false;
-
-  // 진짜 필름처럼 "끊김 없이 물 흐르듯" 연속으로 흘러가게 하기 위해,
-  // 사진 세트를 여러 번 이어 붙이고 한 세트 폭만큼 지나가면 살짝 되감아
-  // 이음매가 보이지 않게 순환합니다. (스텝 단위 점프가 없어 뚝 끊기지 않음)
-  const COPIES = Math.max(3, Math.ceil(10 / N) + 1);
-  const seq = [];
-  for (let c = 0; c < COPIES; c++) {
-    for (let i = 0; i < N; i++) seq.push(i);
-  }
-
-  // 실제 35mm 필름 가장자리 인쇄처럼, 각 프레임 위/아래에 필름 마킹을 넣습니다.
-  // 상단: 프레임 번호(13A 스타일)와 필름 브랜드가 번갈아,
-  // 하단: 앰버색 세 자리 코드(004-400 스타일)와 필름 특유의 삼각 마크(◄).
-  // 일부 하단 마킹은 실제 필름처럼 180도 뒤집혀 인쇄됩니다.
-  const BRAND = '1017 Film';
-  const STOCK = '400';
-  const seqHtml = seq.map((real, k) => {
-    const num3 = String(real + 1).padStart(3, '0');            // 004 스타일
-    const topCode = `${real + 1}${k % 2 ? 'A' : ''}`;          // 13A 스타일
-    const top = (k % 3 === 1) ? BRAND : topCode;               // 코드/브랜드 번갈아
-    const flipBot = (k % 3 === 2);                             // 세 프레임마다 한 번 뒤집힘
-    const botCore = (k % 2 === 0)
-      ? `${num3}-${STOCK} <i class="gallery__tri" aria-hidden="true"></i>`
-      : `<i class="gallery__tri" aria-hidden="true"></i> ${num3}`;
-    const bot = botCore;
-    return `
-      <div class="gallery__frame" data-real="${real}">
-        <span class="gallery__mark gallery__mark--top">${top}</span>
-        <div class="gallery__shot">
-          <img src="${galleryImages[real]}" alt="갤러리 사진 ${real + 1}" loading="lazy" decoding="async" draggable="false" />
-        </div>
-        <span class="gallery__mark gallery__mark--bot${flipBot ? ' is-flipped' : ''}">${bot}</span>
-      </div>`;
-  }).join('');
-
-  gallery.innerHTML = `
-    <div class="gallery__film" aria-label="갤러리 필름">
-      <div class="gallery__track">
-        ${seqHtml}
+  grid.innerHTML = `
+    <div class="gallery-smooth" aria-label="갤러리">
+      <div class="gallery-smooth__track">
+        ${repeated.map(({ src, index }) => `
+          <button type="button" class="gallery-smooth__item" data-real="${index}" aria-label="갤러리 사진 ${index + 1}">
+            <img src="${src}" alt="갤러리 사진 ${index + 1}" decoding="async" draggable="false" />
+          </button>
+        `).join('')}
       </div>
     </div>
   `;
 
-  const film = gallery.querySelector('.gallery__film');
-  const track = gallery.querySelector('.gallery__track');
-  const frames = Array.from(track.children);
+  const viewport = grid.querySelector('.gallery-smooth');
+  viewport.style.touchAction = 'pan-y';
+  viewport.style.webkitUserSelect = 'none';
+  viewport.style.userSelect = 'none';
+  const track = grid.querySelector('.gallery-smooth__track');
+  track.style.willChange = 'transform';
+  track.style.backfaceVisibility = 'hidden';
+  track.style.webkitBackfaceVisibility = 'hidden';
+  const items = Array.from(track.querySelectorAll('.gallery-smooth__item'));
+  const images = Array.from(track.querySelectorAll('img'));
 
-  const SPEED = 27;            // px/초 — 잔잔하게 흐르는 속도
-  let x = 0;                   // 현재 트랙 위치(px)
-  let setWidth = 0;            // 사진 한 세트의 폭(px) — 되감기 기준
-  let rafId = null;
-  let lastT = null;
-  let inView = true;
-  let paused = false;          // 라이트박스 열림 등으로 일시정지
+  let itemWidth = 0;
+  let step = 0;
+  let setWidth = 0;
+  let offset = 0;
+  let autoTimer = 0;
+  let dragging = false;
+  let moved = false;
+  let startX = 0;
+  let startY = 0;
+  let currentX = 0;
+  let startOffset = 0;
+  let axis = '';
+  let isAnimating = false;
+  let isInView = true;
+  let dragRaf = 0;
+  let pendingOffset = 0;
+  let motionToken = 0;
 
-  function frameStep() {
-    const f = frames[0];
-    if (!f) return 0;
-    const gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || '0') || 0;
-    return f.getBoundingClientRect().width + gap;
+  function setTransition(enabled, duration = MOVE_MS) {
+    track.style.transition = enabled
+      ? `transform ${duration}ms cubic-bezier(0.22, 0.72, 0.2, 1)`
+      : 'none';
+  }
+
+  function applyTransform() {
+    track.style.transform = `translate3d(${offset}px,0,0)`;
+  }
+
+  function normalizeInstant() {
+    if (!setWidth) return;
+    let changed = false;
+    while (offset <= -setWidth * 2) {
+      offset += setWidth;
+      changed = true;
+    }
+    while (offset > -setWidth) {
+      offset -= setWidth;
+      changed = true;
+    }
+    if (changed) {
+      setTransition(false);
+      applyTransform();
+      void track.offsetWidth;
+    }
+  }
+
+  function updateFocus() {
+    const viewportRect = viewport.getBoundingClientRect();
+    const center = viewportRect.left + viewportRect.width / 2;
+    items.forEach((item) => {
+      const rect = item.getBoundingClientRect();
+      const distance = Math.abs(center - (rect.left + rect.width / 2));
+      const ratio = Math.max(0, 1 - distance / viewportRect.width);
+      const scale = 0.985 + ratio * 0.018;
+      const opacity = 0.62 + ratio * 0.38;
+      item.style.transform = `scale(${scale.toFixed(3)})`;
+      item.style.opacity = opacity.toFixed(3);
+    });
+  }
+
+
+  function readCurrentOffset() {
+    const transform = window.getComputedStyle(track).transform;
+    if (!transform || transform === 'none') return offset;
+    try {
+      const matrix = new DOMMatrixReadOnly(transform);
+      return Number.isFinite(matrix.m41) ? matrix.m41 : offset;
+    } catch (_) {
+      const match = transform.match(/matrix\(([^)]+)\)/);
+      if (match) {
+        const parts = match[1].split(',').map(Number);
+        if (Number.isFinite(parts[4])) return parts[4];
+      }
+      return offset;
+    }
+  }
+
+  function interruptMotion() {
+    motionToken += 1;
+    clearAuto();
+    if (isAnimating) {
+      offset = readCurrentOffset();
+      isAnimating = false;
+      setTransition(false);
+      applyTransform();
+      normalizeInstant();
+      updateFocus();
+    } else {
+      setTransition(false);
+    }
+  }
+
+  function renderDragFrame() {
+    dragRaf = 0;
+    offset = pendingOffset;
+    applyTransform();
+  }
+
+  function queueDragFrame(nextOffset) {
+    pendingOffset = nextOffset;
+    if (!dragRaf) dragRaf = requestAnimationFrame(renderDragFrame);
+  }
+
+  function clearAuto() {
+    if (autoTimer) clearTimeout(autoTimer);
+    autoTimer = 0;
+  }
+
+  function scheduleAuto(delay = HOLD_MS) {
+    clearAuto();
+    if (!isInView || dragging || isAnimating) return;
+    autoTimer = setTimeout(() => moveByStep(1, true), delay);
+  }
+
+  function moveByStep(direction, fromAuto = false) {
+    if (isAnimating || dragging || !step) return;
+    isAnimating = true;
+    clearAuto();
+    const token = ++motionToken;
+    let finished = false;
+    setTransition(true);
+    offset -= step * direction;
+    applyTransform();
+
+    const finish = () => {
+      if (finished || token !== motionToken) return;
+      finished = true;
+      isAnimating = false;
+      normalizeInstant();
+      updateFocus();
+      scheduleAuto(fromAuto ? HOLD_MS : 1150);
+    };
+    track.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, MOVE_MS + 120);
+  }
+
+  function snapAfterDrag() {
+    if (!step) return;
+    const dx = currentX - startX;
+    let target = Math.round(offset / step) * step;
+    if (Math.abs(dx) >= SWIPE_THRESHOLD) {
+      target = dx < 0
+        ? Math.floor(offset / step) * step
+        : Math.ceil(offset / step) * step;
+    }
+
+    isAnimating = true;
+    const token = ++motionToken;
+    let finished = false;
+    const snapDistance = Math.abs(target - offset);
+    const snapDuration = Math.max(320, Math.min(520, 300 + snapDistance * 0.48));
+    setTransition(true, snapDuration);
+    offset = target;
+    applyTransform();
+
+    const finish = () => {
+      if (finished || token !== motionToken) return;
+      finished = true;
+      isAnimating = false;
+      normalizeInstant();
+      updateFocus();
+      scheduleAuto(1200);
+    };
+    track.addEventListener('transitionend', finish, { once: true });
+    setTimeout(finish, snapDuration + 110);
   }
 
   function measure() {
-    setWidth = frameStep() * N;   // 한 세트 폭
-    wrap();
-    apply();
+    const vw = viewport.clientWidth || window.innerWidth || 390;
+    const compact = vw <= 390;
+    itemWidth = compact ? 214 : 230;
+    const itemHeight = compact ? 312 : 330;
+    step = itemWidth + GAP;
+    setWidth = galleryImages.length * step;
+
+    viewport.style.height = `${compact ? 360 : 380}px`;
+    track.style.gap = `${GAP}px`;
+    track.style.paddingLeft = `${Math.max(0, Math.round((vw - itemWidth) / 2))}px`;
+    track.style.paddingRight = `${Math.max(0, Math.round((vw - itemWidth) / 2))}px`;
+
+    items.forEach((item) => {
+      item.style.width = `${itemWidth}px`;
+      item.style.height = `${itemHeight}px`;
+      item.style.flexBasis = `${itemWidth}px`;
+    });
+
+    if (!offset) offset = -setWidth;
+    normalizeInstant();
+    setTransition(false);
+    applyTransform();
+    updateFocus();
   }
 
-  function wrap() {
-    if (setWidth <= 0) return;
-    // x는 항상 (-setWidth, 0] 범위 안에 있도록 유지 → 이음매 없이 순환
-    while (x <= -setWidth) x += setWidth;
-    while (x > 0) x -= setWidth;
+  function begin(x, y) {
+    interruptMotion();
+    dragging = true;
+    moved = false;
+    axis = '';
+    startX = currentX = x;
+    startY = y;
+    startOffset = offset;
+    pendingOffset = offset;
+    viewport.classList.add('is-dragging');
   }
 
-  function apply() {
-    track.style.transform = `translate3d(${x}px, 0, 0)`;
-  }
-
-  function tick(t) {
-    if (lastT == null) lastT = t;
-    const dt = Math.min(0.05, (t - lastT) / 1000); // 탭 전환 후 큰 점프 방지
-    lastT = t;
-    if (!paused && !dragging && inView && !prefersReduced) {
-      x -= SPEED * dt;
-      wrap();
-      apply();
-    }
-    rafId = requestAnimationFrame(tick);
-  }
-
-  /* ── 손가락을 그대로 따라오는 드래그(스크럽) ── */
-  let dragging = false, decided = false, horizontal = false;
-  let sx = 0, sy = 0, startX = 0, moved = false;
-
-  function down(px, py) {
-    dragging = true; decided = false; horizontal = false; moved = false;
-    sx = px; sy = py;
-    startX = x;
-  }
-  function moveHandler(px, py, ev) {
+  function move(x, y, event) {
     if (!dragging) return;
-    const dx = px - sx, dy = py - sy;
-    if (!decided) {
-      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
-      horizontal = Math.abs(dx) > Math.abs(dy);
-      decided = true;
-      if (!horizontal) { dragging = false; return; } // 세로 → 페이지 스크롤 양보
+    const dx = x - startX;
+    const dy = y - startY;
+    currentX = x;
+
+    if (!axis) {
+      if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+      axis = Math.abs(dx) >= Math.abs(dy) * 0.9 ? 'x' : 'y';
+      if (axis === 'y') {
+        dragging = false;
+        viewport.classList.remove('is-dragging');
+        scheduleAuto(700);
+        return;
+      }
     }
-    if (Math.abs(dx) > 4) moved = true;
-    if (horizontal && ev && ev.cancelable) ev.preventDefault();
-    x = startX + dx;
-    wrap();
-    apply();
+
+    if (axis !== 'x') return;
+    moved = true;
+    if (event && event.cancelable) event.preventDefault();
+    queueDragFrame(startOffset + dx);
   }
-  function up() {
+
+  function end(target) {
     if (!dragging) return;
     dragging = false;
-    lastT = null; // 이어서 연속 흐름 재개 시 dt 튐 방지
+    viewport.classList.remove('is-dragging');
+
+    if (moved) {
+      if (dragRaf) {
+        cancelAnimationFrame(dragRaf);
+        dragRaf = 0;
+        offset = pendingOffset;
+        applyTransform();
+      }
+      snapAfterDrag();
+      return;
+    }
+
+    scheduleAuto(900);
+    const item = target && target.closest ? target.closest('.gallery-smooth__item') : null;
+    if (item && typeof window.__openGalleryViewer === 'function') {
+      window.__openGalleryViewer(Number(item.dataset.real) || 0);
+    }
   }
 
-  film.addEventListener('touchstart', (e) => { if (e.touches[0]) down(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
-  film.addEventListener('touchmove', (e) => { if (e.touches[0]) moveHandler(e.touches[0].clientX, e.touches[0].clientY, e); }, { passive: false });
-  film.addEventListener('touchend', up);
-  film.addEventListener('touchcancel', up);
-  film.addEventListener('mousedown', (e) => { down(e.clientX, e.clientY); e.preventDefault(); });
-  window.addEventListener('mousemove', (e) => { if (dragging) moveHandler(e.clientX, e.clientY, e); });
-  window.addEventListener('mouseup', up);
+  viewport.addEventListener('touchstart', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) begin(t.clientX, t.clientY);
+  }, { passive: true });
 
-  // 탭(드래그 아님) → 확대 보기
-  film.addEventListener('click', (e) => {
-    if (moved) return; // 스와이프였으면 무시
-    const frame = e.target.closest('.gallery__frame');
-    if (frame && typeof window.__openGalleryViewer === 'function') {
-      window.__openGalleryViewer(Number(frame.dataset.real) || 0);
+  viewport.addEventListener('touchmove', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) move(t.clientX, t.clientY, e);
+  }, { passive: false });
+
+  viewport.addEventListener('touchend', (e) => end(e.target));
+  viewport.addEventListener('touchcancel', () => {
+    if (!dragging) return;
+    dragging = false;
+    if (dragRaf) {
+      cancelAnimationFrame(dragRaf);
+      dragRaf = 0;
+      offset = pendingOffset;
+      applyTransform();
+      updateFocus();
     }
+    viewport.classList.remove('is-dragging');
+    normalizeInstant();
+    scheduleAuto(900);
   });
 
-  // 라이트박스가 열려 있으면 흐름 정지
-  function syncPaused() {
-    const v = document.getElementById('viewer');
-    paused = !!(v && v.classList.contains('is-active'));
-  }
-  document.addEventListener('click', syncPaused, true);
-  window.addEventListener('gallery:viewer', syncPaused);
+  viewport.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    begin(e.clientX, e.clientY);
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => move(e.clientX, e.clientY, e), { passive: false });
+  window.addEventListener('mouseup', (e) => end(e.target));
+
+  images.forEach((img) => img.addEventListener('dragstart', (e) => e.preventDefault()));
 
   if ('IntersectionObserver' in window) {
     new IntersectionObserver((entries) => {
-      entries.forEach((en) => { inView = en.isIntersecting; });
-    }, { threshold: 0.05 }).observe(film);
+      entries.forEach((entry) => {
+        isInView = entry.isIntersecting;
+        if (isInView) scheduleAuto(450);
+        else clearAuto();
+      });
+    }, { threshold: 0.1 }).observe(viewport);
   }
 
-  window.addEventListener('resize', measure, { passive: true });
+  requestAnimationFrame(() => {
+    measure();
+    scheduleAuto(450);
+  });
 
-  // 이미지 로드 후 정확히 재측정
-  const imgs = Array.from(track.querySelectorAll('img'));
-  Promise.all(imgs.map((im) => (im.complete && im.naturalWidth)
-    ? Promise.resolve()
-    : new Promise((r) => { im.addEventListener('load', r, { once: true }); im.addEventListener('error', r, { once: true }); })
-  )).then(measure);
-
-  measure();
-  rafId = requestAnimationFrame(tick);
+  window.addEventListener('resize', () => requestAnimationFrame(measure), { passive: true });
 }
 
 /* ── 사진 확대 보기 (라이트박스) ── */
@@ -947,7 +1072,7 @@ function initViewer() {
   }
 
   function moveTo(px, animate) {
-    track.style.transition = animate ? 'transform 560ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none';
+    track.style.transition = animate ? 'transform 720ms cubic-bezier(.25,.8,.25,1)' : 'none';
     track.style.transform = `translate3d(${px}px,0,0)`;
   }
 
@@ -1025,7 +1150,7 @@ function initViewer() {
     const elapsed = Math.max(1, performance.now() - startTime);
     const velocity = dx / elapsed;
     pointerId = null;
-    if (Math.abs(dx) > slideWidth * 0.18 || Math.abs(velocity) > 0.42) go(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > slideWidth * 0.14 || Math.abs(velocity) > 0.38) go(dx < 0 ? 1 : -1);
     else snap(true);
   }
 
@@ -1066,43 +1191,100 @@ function initViewer() {
 }
 
 /* ── OUR STORY: 우편엽서 미니멀 타임라인 ──
-   편지: images/letters/1.jpg(상빈→현준), 2.jpg(현준→상빈)
+   편지 텍스트는 CONFIG.story, 사진은 images/story/couple-2024.jpg·couple-2025.jpg
    봉투 속 사진: images/story/1.* 이 있으면 그 사진, 없으면 히어로 사진 */
 async function initStoryPost() {
   const section = document.getElementById('letter');
   if (!section) return;
-  const frames = section.querySelectorAll('[data-reveal]');
-  if (!frames.length) return;
 
-  frames.forEach((f) => f.classList.remove('is-in'));
-  const startReveal = () => {
-    if (!('IntersectionObserver' in window)) {
-      frames.forEach((f) => f.classList.add('is-in'));
-      return;
-    }
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => {
-        if (e.isIntersecting) {
-          e.target.classList.add('is-in');
-          io.unobserve(e.target);
-        }
-      });
-    }, { threshold: 0.24, rootMargin: '0px 0px -12% 0px' });
-    frames.forEach((f) => io.observe(f));
-  };
+  const title = section.querySelector('.section__title');
+  const wrap = document.getElementById('story-cards');
+  const targets = [title, wrap].filter(Boolean);
+  targets.forEach(function (el) { el.classList.add('seq-reveal'); });
 
-  if (document.body.classList.contains('intro-active')) {
-    window.addEventListener('invitation:opened', startReveal, { once: true });
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced || !('IntersectionObserver' in window)) {
+    targets.forEach(function (el) { el.classList.add('is-in'); });
   } else {
-    startReveal();
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.14, rootMargin: '0px 0px -10% 0px' });
+    whenReady(function () { targets.forEach(function (el) { io.observe(el); }); });
   }
 
-  section.querySelectorAll('.storyframe__img img').forEach((img) => {
-    img.addEventListener('error', () => {
-      const fig = img.closest('.storyframe');
-      if (fig) fig.style.display = 'none';
-    }, { once: true });
+  if (!wrap) return;
+
+  const cards = Array.prototype.slice.call(wrap.querySelectorAll('.card'));
+  const dotsBox = document.getElementById('cards-dots');
+  const prevBtn = document.getElementById('cards-prev');
+  const nextBtn = document.getElementById('cards-next');
+  const hint = document.getElementById('cards-hint');
+  let cur = 0;
+
+  if (dotsBox) {
+    dotsBox.innerHTML = cards.map(function (_, i) {
+      return '<i class="cards__dot' + (i === 0 ? ' is-on' : '') + '"></i>';
+    }).join('');
+  }
+  const dots = dotsBox ? Array.prototype.slice.call(dotsBox.children) : [];
+
+  function sync() {
+    cards.forEach(function (el, i) {
+      el.classList.toggle('is-current', i === cur);
+      el.style.zIndex = String(cards.length - Math.abs(i - cur));
+    });
+    dots.forEach(function (d, i) { d.classList.toggle('is-on', i === cur); });
+    if (prevBtn) prevBtn.disabled = cur === 0;
+    if (nextBtn) nextBtn.disabled = cur === cards.length - 1;
+    if (hint) {
+      hint.textContent = cards[cur].classList.contains('is-flipped')
+        ? '다음 카드로 넘겨 보세요'
+        : '카드를 눌러 뒤집어 보세요';
+    }
+  }
+
+  cards.forEach(function (el) {
+    el.addEventListener('click', function () {
+      if (!el.classList.contains('is-current')) return;
+      el.classList.toggle('is-flipped');
+      sync();
+    });
   });
+
+  function move(dir) {
+    const next = cur + dir;
+    if (next < 0 || next >= cards.length) return;
+    cards[cur].classList.remove('is-flipped');
+    cur = next;
+    sync();
+  }
+
+  if (prevBtn) prevBtn.addEventListener('click', function () { move(-1); });
+  if (nextBtn) nextBtn.addEventListener('click', function () { move(1); });
+
+  let sx = 0, sy = 0, decided = false, horizontal = false;
+  wrap.addEventListener('touchstart', function (e) {
+    if (!e.touches[0]) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; decided = false; horizontal = false;
+  }, { passive: true });
+  wrap.addEventListener('touchmove', function (e) {
+    if (!e.touches[0] || decided) return;
+    const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+    decided = true; horizontal = Math.abs(dx) > Math.abs(dy);
+  }, { passive: true });
+  wrap.addEventListener('touchend', function (e) {
+    if (!horizontal) return;
+    const t = e.changedTouches && e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - sx;
+    if (dx < -40) move(1);
+    else if (dx > 40) move(-1);
+  });
+
+  sync();
 }
 
 
@@ -1919,7 +2101,16 @@ async function initStoryPost() {
     initViewer();
     initStoryPost();
     initFooterButterflies();
-    initFooterSwanMotion();
+    tidyLabels();
+  }
+
+  /* "Wedding Day." 처럼 뒤에 붙은 마침표를 정리합니다. */
+  function tidyLabels() {
+    document.querySelectorAll('h1, h2, h3, h4, p, span, small, em, i, b, strong').forEach((el) => {
+      if (el.children.length) return;
+      const t = (el.textContent || '').trim();
+      if (/^wedding\s*day\s*[.·・]$/i.test(t)) el.textContent = 'Wedding Day';
+    });
   }
 
   if (document.readyState === 'loading') {
