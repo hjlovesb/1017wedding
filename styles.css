@@ -14316,3 +14316,40 @@ body .section .section__title::after { content: none !important; display: none !
 #gallery-grid { max-height: 340px !important; overflow: hidden !important; }
 #gallery-grid > div { max-height: 340px !important; overflow: hidden !important; }
 #gallery-grid img { border-radius: 0 !important; box-shadow: none !important; }
+
+/* ================================================================
+   MOBILE RSVP POPUP BACKGROUND FIX (2026-07-23)
+   Uses a real local image file instead of inline/data backgrounds so
+   mobile browsers and hosted builds load the artwork reliably.
+   ================================================================ */
+@media (max-width: 768px) {
+  .rsvp-modal__panel {
+    background-color: #f6f0e9 !important;
+    background-image: url("images/popup-bg.png") !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
+    background-size: cover !important;
+    -webkit-background-size: cover !important;
+  }
+
+  .rsvp-modal__panel::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    border: 0 !important;
+    border-radius: inherit !important;
+    background: rgba(255, 252, 248, 0.34) !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+  }
+
+  .rsvp-modal__panel::after {
+    display: none !important;
+  }
+
+  .rsvp-modal__close,
+  .rsvp-modal__panel > .rsvp-card {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+}
