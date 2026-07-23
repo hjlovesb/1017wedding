@@ -650,16 +650,32 @@ async function initCalendar() {
   const section = $('#gallery');
   if (!grid) return;
 
-  galleryImages = Array.from({ length: 18 }, (_, i) => `images/gallery/${i + 1}.jpg`);
-  if (section) {
-    section.style.display = 'block';
-    section.style.visibility = 'visible';
-    section.style.opacity = '1';
+  grid.innerHTML = `
+    <div class="section-loading">
+      <span class="section-loading__dot"></span>
+      <span class="section-loading__dot"></span>
+      <span class="section-loading__dot"></span>
+    </div>
+  `;
+
+  galleryImages = await loadImagesFromFolder('gallery');
+
+  if (galleryImages.length === 0) {
+    if (section) section.style.display = 'none';
+    return;
   }
-  grid.style.display = 'block';
-  grid.style.visibility = 'visible';
-  grid.style.opacity = '1';
-  grid.innerHTML = '';
+
+  grid.innerHTML = galleryImages
+    .map(
+      (src, i) => `
+        <div class="gallery__item" data-index="${i}">
+          <img src="${src}" alt="갤러리 사진 ${i + 1}" loading="lazy" />
+        </div>
+      `
+    )
+    .join('');
+
+  observeNewElements(grid);
 }
 
   /* ── Footer: 나비 사진 겹침 효과 ──
@@ -688,350 +704,253 @@ async function initCalendar() {
    [이동] CSS @keyframes 한 개가 담당합니다. "이동 → 정지"를 번갈아 넣어
    스르륵 옮겨간 뒤 잠시 멈춥니다. 마지막 지점의 그림이 시작 지점과
    완전히 같으므로 이음매도, 되감을 계산도 없습니다. */
-
-
 function initGallerySlider() {
   const grid = document.querySelector('#gallery-grid');
   if (!grid || !galleryImages.length) return;
 
-  const GAP = 12;
-  const MOVE_MS = 1080;
-  const HOLD_MS = 1850;
-  const DRAG_THRESHOLD = 3;
-  const SWIPE_THRESHOLD = 28;
-  const copies = 3;
-  const repeated = [];
+  const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const MOVE_MS = 1150;
+  const HOLD_MS = 1900;
+  const GAP = 8;
+  const SETS = 3;
 
-  for (let c = 0; c < copies; c++) {
-    galleryImages.forEach((src, index) => repeated.push({ src, index }));
+  const src = galleryImages.slice();
+  const one = src.length;
+
+  const view = document.createElement('div');
+  view.style.cssText = [
+    'position:relative', 'display:block', 'width:100%',
+    'overflow:hidden', 'background:transparent',
+    'cursor:grab', 'padding:0', 'margin:0',
+    '-webkit-tap-highlight-color:transparent'
+  ].join(';');
+
+  const shifter = document.createElement('div');
+  shifter.style.cssText = [
+    'position:relative', 'width:max-content', 'height:100%',
+    'transform:translate3d(0,0,0)', 'will-change:transform'
+  ].join(';');
+
+  const rail = document.createElement('div');
+  rail.style.cssText = [
+    'display:flex', 'align-items:stretch',
+    'height:100%', 'width:max-content',
+    'gap:' + GAP + 'px', 'margin:0',
+    'will-change:transform', 'backface-visibility:hidden'
+  ].join(';');
+
+  const cells = [];
+  for (let n = 0; n < one * SETS; n++) {
+    const k = n % one;
+    const cell = document.createElement('div');
+    cell.setAttribute('data-real', String(k));
+    cell.style.cssText = 'position:relative;flex:0 0 auto;height:100%;overflow:hidden;cursor:pointer;background:transparent;';
+
+    const img = document.createElement('img');
+    img.src = src[k];
+    img.alt = '갤러리 사진 ' + (k + 1);
+    img.decoding = 'async';
+    img.draggable = false;
+    img.style.cssText = [
+      'display:block', 'width:100%', 'height:100%',
+      'object-fit:contain', 'object-position:center',
+      'border:0', 'border-radius:0', 'box-shadow:none',
+      'pointer-events:none', 'user-select:none', '-webkit-user-drag:none'
+    ].join(';');
+
+    cell.appendChild(img);
+    rail.appendChild(cell);
+    cells.push(cell);
   }
 
-  grid.innerHTML = `
-    <div class="gallery-smooth" aria-label="갤러리">
-      <div class="gallery-smooth__track">
-        ${repeated.map(({ src, index }) => `
-          <button type="button" class="gallery-smooth__item" data-real="${index}" aria-label="갤러리 사진 ${index + 1}">
-            <img src="${src}" alt="갤러리 사진 ${index + 1}" decoding="async" draggable="false" />
-          </button>
-        `).join('')}
-      </div>
-    </div>
-  `;
+  shifter.appendChild(rail);
+  view.appendChild(shifter);
+  grid.innerHTML = '';
+  grid.appendChild(view);
 
-  const viewport = grid.querySelector('.gallery-smooth');
-  viewport.style.touchAction = 'pan-y';
-  viewport.style.webkitUserSelect = 'none';
-  viewport.style.userSelect = 'none';
-  const track = grid.querySelector('.gallery-smooth__track');
-  track.style.willChange = 'transform';
-  track.style.backfaceVisibility = 'hidden';
-  track.style.webkitBackfaceVisibility = 'hidden';
-  const items = Array.from(track.querySelectorAll('.gallery-smooth__item'));
-  const images = Array.from(track.querySelectorAll('img'));
+  const styleTag = document.createElement('style');
+  document.head.appendChild(styleTag);
 
-  let itemWidth = 0;
-  let step = 0;
-  let setWidth = 0;
-  let offset = 0;
-  let autoTimer = 0;
-  let dragging = false;
-  let moved = false;
-  let startX = 0;
-  let startY = 0;
-  let currentX = 0;
-  let startOffset = 0;
-  let axis = '';
-  let isAnimating = false;
-  let isInView = true;
-  let dragRaf = 0;
-  let pendingOffset = 0;
-  let motionToken = 0;
-
-  function setTransition(enabled, duration = MOVE_MS) {
-    track.style.transition = enabled
-      ? `transform ${duration}ms cubic-bezier(0.22, 0.72, 0.2, 1)`
-      : 'none';
-  }
-
-  function applyTransform() {
-    track.style.transform = `translate3d(${offset}px,0,0)`;
-  }
-
-  function normalizeInstant() {
-    if (!setWidth) return;
-    let changed = false;
-    while (offset <= -setWidth * 2) {
-      offset += setWidth;
-      changed = true;
-    }
-    while (offset > -setWidth) {
-      offset -= setWidth;
-      changed = true;
-    }
-    if (changed) {
-      setTransition(false);
-      applyTransform();
-      void track.offsetWidth;
-    }
-  }
-
-  function updateFocus() {
-    const viewportRect = viewport.getBoundingClientRect();
-    const center = viewportRect.left + viewportRect.width / 2;
-    items.forEach((item) => {
-      const rect = item.getBoundingClientRect();
-      const distance = Math.abs(center - (rect.left + rect.width / 2));
-      const ratio = Math.max(0, 1 - distance / viewportRect.width);
-      const scale = 0.985 + ratio * 0.018;
-      const opacity = 0.62 + ratio * 0.38;
-      item.style.transform = `scale(${scale.toFixed(3)})`;
-      item.style.opacity = opacity.toFixed(3);
-    });
-  }
-
-
-  function readCurrentOffset() {
-    const transform = window.getComputedStyle(track).transform;
-    if (!transform || transform === 'none') return offset;
-    try {
-      const matrix = new DOMMatrixReadOnly(transform);
-      return Number.isFinite(matrix.m41) ? matrix.m41 : offset;
-    } catch (_) {
-      const match = transform.match(/matrix\(([^)]+)\)/);
-      if (match) {
-        const parts = match[1].split(',').map(Number);
-        if (Number.isFinite(parts[4])) return parts[4];
-      }
-      return offset;
-    }
-  }
-
-  function interruptMotion() {
-    motionToken += 1;
-    clearAuto();
-    if (isAnimating) {
-      offset = readCurrentOffset();
-      isAnimating = false;
-      setTransition(false);
-      applyTransform();
-      normalizeInstant();
-      updateFocus();
-    } else {
-      setTransition(false);
-    }
-  }
-
-  function renderDragFrame() {
-    dragRaf = 0;
-    offset = pendingOffset;
-    applyTransform();
-  }
-
-  function queueDragFrame(nextOffset) {
-    pendingOffset = nextOffset;
-    if (!dragRaf) dragRaf = requestAnimationFrame(renderDragFrame);
-  }
-
-  function clearAuto() {
-    if (autoTimer) clearTimeout(autoTimer);
-    autoTimer = 0;
-  }
-
-  function scheduleAuto(delay = HOLD_MS) {
-    clearAuto();
-    if (!isInView || dragging || isAnimating) return;
-    autoTimer = setTimeout(() => moveByStep(1, true), delay);
-  }
-
-  function moveByStep(direction, fromAuto = false) {
-    if (isAnimating || dragging || !step) return;
-    isAnimating = true;
-    clearAuto();
-    const token = ++motionToken;
-    let finished = false;
-    setTransition(true);
-    offset -= step * direction;
-    applyTransform();
-
-    const finish = () => {
-      if (finished || token !== motionToken) return;
-      finished = true;
-      isAnimating = false;
-      normalizeInstant();
-      updateFocus();
-      scheduleAuto(fromAuto ? HOLD_MS : 1150);
-    };
-    track.addEventListener('transitionend', finish, { once: true });
-    setTimeout(finish, MOVE_MS + 120);
-  }
-
-  function snapAfterDrag() {
-    if (!step) return;
-    const dx = currentX - startX;
-    let target = Math.round(offset / step) * step;
-    if (Math.abs(dx) >= SWIPE_THRESHOLD) {
-      target = dx < 0
-        ? Math.floor(offset / step) * step
-        : Math.ceil(offset / step) * step;
-    }
-
-    isAnimating = true;
-    const token = ++motionToken;
-    let finished = false;
-    const snapDistance = Math.abs(target - offset);
-    const snapDuration = Math.max(320, Math.min(520, 300 + snapDistance * 0.48));
-    setTransition(true, snapDuration);
-    offset = target;
-    applyTransform();
-
-    const finish = () => {
-      if (finished || token !== motionToken) return;
-      finished = true;
-      isAnimating = false;
-      normalizeInstant();
-      updateFocus();
-      scheduleAuto(1200);
-    };
-    track.addEventListener('transitionend', finish, { once: true });
-    setTimeout(finish, snapDuration + 110);
-  }
+  const widths = [];
+  const offsets = [];
+  let setWidth = 0, shift = 0, padL = 0;
+  let dragging = false, decided = false, horizontal = false, moved = false;
+  let sx = 0, sy = 0, startShift = 0;
 
   function measure() {
-    const vw = viewport.clientWidth || window.innerWidth || 390;
-    const compact = vw <= 390;
-    itemWidth = compact ? 214 : 230;
-    const itemHeight = compact ? 312 : 330;
-    step = itemWidth + GAP;
-    setWidth = galleryImages.length * step;
+    const vw = view.clientWidth || window.innerWidth || 390;
 
-    viewport.style.height = `${compact ? 360 : 380}px`;
-    track.style.gap = `${GAP}px`;
-    track.style.paddingLeft = `${Math.max(0, Math.round((vw - itemWidth) / 2))}px`;
-    track.style.paddingRight = `${Math.max(0, Math.round((vw - itemWidth) / 2))}px`;
+    /* 높이만 고정하고, 칸의 폭은 사진 원본 비율로 정합니다.
+       칸과 사진의 비율이 같으므로 잘리는 부분이 전혀 없습니다.
+       (지금까지 확대돼 보인 건 칸을 고정 폭으로 만들고
+        object-fit: cover 로 잘라 채웠기 때문입니다.) */
+    let h = Math.round(window.innerHeight * 0.46);
+    if (h > 320) h = 320;
+    if (h < 210) h = 210;
+    view.style.height = h + 'px';
 
-    items.forEach((item) => {
-      item.style.width = `${itemWidth}px`;
-      item.style.height = `${itemHeight}px`;
-      item.style.flexBasis = `${itemWidth}px`;
-    });
-
-    if (!offset) offset = -setWidth;
-    normalizeInstant();
-    setTransition(false);
-    applyTransform();
-    updateFocus();
-  }
-
-  function begin(x, y) {
-    interruptMotion();
-    dragging = true;
-    moved = false;
-    axis = '';
-    startX = currentX = x;
-    startY = y;
-    startOffset = offset;
-    pendingOffset = offset;
-    viewport.classList.add('is-dragging');
-  }
-
-  function move(x, y, event) {
-    if (!dragging) return;
-    const dx = x - startX;
-    const dy = y - startY;
-    currentX = x;
-
-    if (!axis) {
-      if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
-      axis = Math.abs(dx) >= Math.abs(dy) * 0.9 ? 'x' : 'y';
-      if (axis === 'y') {
-        dragging = false;
-        viewport.classList.remove('is-dragging');
-        scheduleAuto(700);
-        return;
-      }
+    let acc = 0;
+    for (let n = 0; n < cells.length; n++) {
+      const im = cells[n].firstChild;
+      const ratio = (im && im.naturalWidth && im.naturalHeight)
+        ? (im.naturalWidth / im.naturalHeight) : 0.75;
+      const w = Math.max(80, Math.round(h * ratio));
+      widths[n] = w;
+      cells[n].style.width = w + 'px';
+      offsets[n] = acc;
+      acc += w + GAP;
     }
 
-    if (axis !== 'x') return;
-    moved = true;
-    if (event && event.cancelable) event.preventDefault();
-    queueDragFrame(startOffset + dx);
+    setWidth = 0;
+    for (let k = 0; k < one; k++) setWidth += widths[k] + GAP;
+
+    // 첫 장이 화면 정중앙에 오도록 왼쪽 여백
+    padL = Math.round(vw / 2 - widths[0] / 2);
+    rail.style.paddingLeft = padL + 'px';
   }
 
-  function end(target) {
+  /* 각 장이 화면 정중앙에 오는 위치를 직접 계산해 keyframes로 굽습니다.
+     한 벌을 다 지나면 이동량이 정확히 setWidth 가 되어
+     시작 지점의 그림과 완전히 같아집니다 → 이음매 없음 */
+  function centerShiftFor(k) {
+    const base = padL + widths[0] / 2;                 // 0번 장의 중심
+    return -Math.round((padL + offsets[k] + widths[k] / 2) - base);
+  }
+
+  function buildKeyframes() {
+    if (!setWidth) return;
+    const total = one * (MOVE_MS + HOLD_MS);
+    const EASE = 'cubic-bezier(0.36,0.02,0.2,1)';
+    let css = '@keyframes gsFlow{';
+    css += '0%{transform:translate3d(0,0,0);animation-timing-function:' + EASE + ';}';
+    let t = 0;
+    for (let k = 1; k <= one; k++) {
+      const to = centerShiftFor(k);
+      t += MOVE_MS;
+      css += (t / total * 100).toFixed(4) + '%{transform:translate3d(' + to + 'px,0,0);animation-timing-function:linear;}';
+      t += HOLD_MS;
+      const last = k === one;
+      css += (t / total * 100).toFixed(4) + '%{transform:translate3d(' + to + 'px,0,0);'
+           + (last ? '' : 'animation-timing-function:' + EASE + ';') + '}';
+    }
+    css += '}';
+    styleTag.textContent = css;
+
+    rail.style.animation = 'none';
+    void rail.offsetWidth;
+    if (!prefersReduced) rail.style.animation = 'gsFlow ' + total + 'ms linear infinite';
+  }
+
+  function applyShift() {
+    shifter.style.transform = 'translate3d(' + shift + 'px,0,0)';
+  }
+
+  /* ── 스와이프 ── */
+  function down(px, py) {
+    dragging = true; decided = false; horizontal = false; moved = false;
+    sx = px; sy = py; startShift = shift;
+    rail.style.animationPlayState = 'paused';
+  }
+
+  function drag(px, py, ev) {
+    if (!dragging) return;
+    const dx = px - sx, dy = py - sy;
+    if (!decided) {
+      if (Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+      horizontal = Math.abs(dx) >= Math.abs(dy) * 0.8;
+      decided = true;
+      if (!horizontal) { dragging = false; rail.style.animationPlayState = 'running'; return; }
+    }
+    if (Math.abs(dx) > 3) moved = true;
+    if (ev && ev.cancelable) ev.preventDefault();
+    shift = startShift + dx;
+    if (setWidth) {
+      while (shift > 0) shift -= setWidth;
+      while (shift < -setWidth) shift += setWidth;
+    }
+    applyShift();
+  }
+
+  function up() {
     if (!dragging) return;
     dragging = false;
-    viewport.classList.remove('is-dragging');
-
-    if (moved) {
-      if (dragRaf) {
-        cancelAnimationFrame(dragRaf);
-        dragRaf = 0;
-        offset = pendingOffset;
-        applyTransform();
-      }
-      snapAfterDrag();
-      return;
-    }
-
-    scheduleAuto(900);
-    const item = target && target.closest ? target.closest('.gallery-smooth__item') : null;
-    if (item && typeof window.__openGalleryViewer === 'function') {
-      window.__openGalleryViewer(Number(item.dataset.real) || 0);
-    }
+    rail.style.animationPlayState = 'running';
   }
 
-  viewport.addEventListener('touchstart', (e) => {
-    const t = e.touches && e.touches[0];
-    if (t) begin(t.clientX, t.clientY);
+  view.addEventListener('touchstart', function (e) {
+    if (e.touches[0]) down(e.touches[0].clientX, e.touches[0].clientY);
   }, { passive: true });
-
-  viewport.addEventListener('touchmove', (e) => {
-    const t = e.touches && e.touches[0];
-    if (t) move(t.clientX, t.clientY, e);
+  view.addEventListener('touchmove', function (e) {
+    if (e.touches[0]) drag(e.touches[0].clientX, e.touches[0].clientY, e);
   }, { passive: false });
+  view.addEventListener('touchend', up);
+  view.addEventListener('touchcancel', up);
 
-  viewport.addEventListener('touchend', (e) => end(e.target));
-  viewport.addEventListener('touchcancel', () => {
-    if (!dragging) return;
-    dragging = false;
-    if (dragRaf) {
-      cancelAnimationFrame(dragRaf);
-      dragRaf = 0;
-      offset = pendingOffset;
-      applyTransform();
-      updateFocus();
-    }
-    viewport.classList.remove('is-dragging');
-    normalizeInstant();
-    scheduleAuto(900);
-  });
-
-  viewport.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return;
-    begin(e.clientX, e.clientY);
+  view.addEventListener('mousedown', function (e) {
+    down(e.clientX, e.clientY);
+    view.style.cursor = 'grabbing';
     e.preventDefault();
   });
-  window.addEventListener('mousemove', (e) => move(e.clientX, e.clientY, e), { passive: false });
-  window.addEventListener('mouseup', (e) => end(e.target));
-
-  images.forEach((img) => img.addEventListener('dragstart', (e) => e.preventDefault()));
-
-  if ('IntersectionObserver' in window) {
-    new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        isInView = entry.isIntersecting;
-        if (isInView) scheduleAuto(450);
-        else clearAuto();
-      });
-    }, { threshold: 0.1 }).observe(viewport);
-  }
-
-  requestAnimationFrame(() => {
-    measure();
-    scheduleAuto(450);
+  window.addEventListener('mousemove', function (e) { if (dragging) drag(e.clientX, e.clientY, e); });
+  window.addEventListener('mouseup', function () {
+    if (!dragging) return;
+    view.style.cursor = 'grab';
+    up();
   });
 
-  window.addEventListener('resize', () => requestAnimationFrame(measure), { passive: true });
+  view.addEventListener('click', function (e) {
+    if (moved) return;
+    const cell = e.target.closest('[data-real]');
+    if (cell && typeof window.__openGalleryViewer === 'function') {
+      window.__openGalleryViewer(Number(cell.getAttribute('data-real')) || 0);
+    }
+  });
+
+  document.addEventListener('click', function () {
+    const v = document.getElementById('viewer');
+    const open = !!(v && (v.classList.contains('is-active') || v.classList.contains('show')));
+    rail.style.animationPlayState = open ? 'paused' : 'running';
+  }, true);
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        rail.style.animationPlayState = en.isIntersecting ? 'running' : 'paused';
+      });
+    }, { threshold: 0.05 }).observe(view);
+  }
+
+  let lastW = 0;
+  function setup(force) {
+    if (!force && view.clientWidth === lastW) return;
+    lastW = view.clientWidth;
+    measure();
+    shift = 0;
+    applyShift();
+    buildKeyframes();
+  }
+
+  window.addEventListener('resize', function () { setup(false); }, { passive: true });
+
+  let done = false;
+  function ready() {
+    if (done) return;
+    done = true;
+    setup(true);
+  }
+
+  Promise.all(cells.map(function (c) {
+    const im = c.firstChild;
+    return (im.complete && im.naturalWidth)
+      ? Promise.resolve()
+      : new Promise(function (r) {
+          im.addEventListener('load', r, { once: true });
+          im.addEventListener('error', r, { once: true });
+        });
+  })).then(ready);
+
+  setup(true);              // 즉시 자리부터 잡습니다
+  setTimeout(ready, 1500);
 }
 
 /* ── 사진 확대 보기 (라이트박스) ── */
