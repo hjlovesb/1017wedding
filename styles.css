@@ -13933,3 +13933,72 @@ img { max-width: 100%; }
 .dcal__photo, .card__face, .info__photo, .tray { background-color: #EFEBE3; }
 
 html, body { overflow-x: hidden; }
+
+
+/* =========================================================
+   STABLE MOBILE RUNTIME PATCH
+   Keeps the current design while preventing blank/hidden images.
+   ========================================================= */
+html, body { min-height: 100%; }
+body:not(.intro-active) .invitation {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+#curtain {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+#curtain .curtain__frame,
+#curtain .curtain__image,
+#curtain .curtain__seal-hit { pointer-events: auto; }
+#curtain .curtain__image {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: none !important;
+  visibility: visible !important;
+  opacity: 1;
+}
+#curtain.curtain.is-open { pointer-events: none !important; }
+
+/* Never hide valid content because of delayed mobile image decoding. */
+.hero img,
+.greeting img,
+.card img,
+.info__photo img,
+.tray img,
+#gallery-grid img,
+#viewer img {
+  visibility: visible;
+  opacity: 1;
+}
+.hero__photo-wrap img,
+.card__face img,
+.info__photo img,
+.tray img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Mobile gallery and viewer touch stability. */
+#gallery-grid > div { touch-action: pan-y !important; }
+#viewer,
+#viewer-track,
+.viewer__track,
+.viewer__slide { touch-action: none !important; }
+.viewer__track {
+  width: 100% !important;
+  height: 100% !important;
+  will-change: transform;
+  -webkit-transform: translate3d(0,0,0);
+  transform: translate3d(0,0,0);
+}
+.viewer__slide { flex: 0 0 100% !important; min-width: 100% !important; }
+.viewer__slide img { pointer-events: none !important; }
+
+@media (max-width: 540px) {
+  img { image-rendering: auto; }
+  .curtain { min-height: 100svh; }
+  #curtain .curtain__frame { max-width: min(76vw, 320px) !important; }
+}

@@ -1,35 +1,4 @@
 
-/* ── 이미지 안전장치 ─────────────────────────────────────────
-   경로가 잘못되었거나 네트워크가 불안정해 사진을 못 불러오면
-   브라우저가 깨진 아이콘(?)을 그립니다. 그 자리를 조용히 감춥니다. */
-(function () {
-  'use strict';
-
-  function hide(img) {
-    if (!img || img.dataset.imgGuard === 'done') return;
-    img.dataset.imgGuard = 'done';
-    img.style.visibility = 'hidden';
-    // 사진을 감싼 칸까지 비어 보이지 않도록 함께 정리
-    const box = img.closest('.info__photo, .card__face, .dcal__photo, .tray, .gallery__frame');
-    if (box) box.style.display = 'none';
-  }
-
-  // 캡처 단계에서 받아야 개별 요소의 error 도 놓치지 않습니다
-  window.addEventListener('error', function (e) {
-    const t = e.target;
-    if (t && t.tagName === 'IMG') hide(t);
-  }, true);
-
-  function sweep() {
-    document.querySelectorAll('img').forEach(function (img) {
-      if (img.complete && img.naturalWidth === 0 && img.getAttribute('src')) hide(img);
-    });
-  }
-
-  if (document.readyState === 'complete') sweep();
-  else window.addEventListener('load', sweep);
-})();
-
 /* ============================================
    Romantic Flower - Mobile Wedding Invitation
    script.js
@@ -676,10 +645,10 @@ async function initCalendar() {
     </div>
   `;
 
-  galleryImages = await loadImagesFromFolder('gallery');
+  galleryImages = Array.from({ length: 20 }, (_, i) => `images/gallery/${i + 1}.jpg`);
 
   if (galleryImages.length === 0) {
-    if (section) section.style.display = 'none';
+    grid.innerHTML = '';
     return;
   }
 
@@ -859,8 +828,8 @@ function initGallerySlider() {
       const t = Math.min(1, (now - t0) / ms);
       // 아주 완만하게 출발해 소리 없이 멈추는 곡선
       const e = t < 0.5
-        ? 2.5 * t * t * t
-        : 1 - Math.pow(1 - t, 2.6) * 1.25;
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
       x = from + delta * e;
       apply();
       if (t < 1) raf = requestAnimationFrame(frame);

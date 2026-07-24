@@ -37,7 +37,7 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="styles.css?v=20260724m" />
+  <link rel="stylesheet" href="styles.css?v=20260724stable1" />
 
   <!-- Intro / Thankyou image preload -->
   <link rel="preload" as="image" href="images/intro/intro-bg.jpg" />
@@ -80,7 +80,7 @@
     <section class="section hero hero--photo-text" id="hero">
       <div class="floral-frame">
         <div class="hero__photo-wrap">
-          <img id="hero-img" src="" alt="웨딩 사진" loading="lazy" />
+          <img id="hero-img" src="images/hero/1.jpg" alt="웨딩 사진" loading="eager" fetchpriority="high" decoding="async" />
           <!-- Countdown -->
           <div class="countdown anim-target" id="countdown">
             <div class="countdown__item">
@@ -369,10 +369,41 @@
     </section>
   </div>
 
+  <!-- Mobile-safe intro fallback: works even when an optional script fails -->
+  <script>
+  (function(){
+    function bindIntro(){
+      var curtain=document.getElementById('curtain');
+      var btn=document.getElementById('curtain-open');
+      if(!curtain||!btn||btn.dataset.fallbackBound==='1') return;
+      btn.dataset.fallbackBound='1';
+      function openIntro(e){
+        if(e){e.preventDefault();e.stopPropagation();}
+        document.body.classList.remove('intro-active');
+        document.body.classList.add('intro-revealing');
+        document.body.style.overflow='';
+        curtain.classList.add('is-opening','is-open');
+        curtain.style.pointerEvents='none';
+        setTimeout(function(){
+          curtain.classList.add('is-hidden');
+          curtain.style.display='none';
+          document.body.classList.remove('intro-revealing');
+          window.scrollTo(0,0);
+          window.dispatchEvent(new CustomEvent('invitation:opened'));
+        },1450);
+      }
+      btn.addEventListener('click',openIntro,{capture:true});
+      btn.addEventListener('touchend',openIntro,{capture:true,passive:false});
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindIntro,{once:true});
+    else bindIntro();
+  })();
+  </script>
+
   <!-- Scripts -->
-  <script src="config.js?v=20260724m"></script>
-  <script src="script.js?v=20260724m"></script>
-  <script src="music.js?v=20260724m"></script>
-  <script src="rsvp.js?v=20260724m"></script>
+  <script src="config.js?v=20260724stable1"></script>
+  <script src="script.js?v=20260724stable1"></script>
+  <script src="music.js?v=20260724stable1"></script>
+  <script src="rsvp.js?v=20260724stable1"></script>
 </body>
 </html>
