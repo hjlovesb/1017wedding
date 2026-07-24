@@ -1464,125 +1464,37 @@ async function initStoryPost() {
     });
   }
 
-  /* ── 지도: 네이버 지도 우선 시도 → 실패 시 자동으로 구글 지도 임베드로 전환 ──
-     네이버 Open API는 콘솔 등록이 안 맞으면 화면에 "인증이 실패했습니다"라는
-     보기 안좋은 에러 패널을 그대로 노출합니다. 이를 막기 위해
-     1) window.navermap_authFailure 콜백(네이버 공식 훅)을 미리 등록해 인증 실패를
-        조용히 감지하고, 2) 스크립트 자체가 로드되지 않거나 3초 안에 정상
-        렌더링되지 않는 경우까지 포함해 항상 구글 지도 임베드로 자연스럽게
-        전환되도록 했습니다. 즉, 네이버 콘솔 설정이 맞으면 네이버 지도가,
-        아직 안 맞으면 사용자 눈에 보이지 않게 구글 지도가 대신 뜹니다. */
+  /* ── 지도 ── */
   function initMap() {
     const wrap = document.getElementById('loc-map-wrap');
     if (!wrap) return;
 
-    // 네이버 지도 키는 config.js의 map.naverClientId에서 읽습니다.
-    // 이 키가 네이버 클라우드 콘솔에 "배포된 도메인"과 함께 등록되어 있어야
-    // 네이버 지도가 뜨고, 인증이 실패하면 자동으로 구글 지도로 대체됩니다.
-    const NAVER_CLIENT_ID = (typeof CONFIG !== 'undefined' && CONFIG.map && CONFIG.map.naverClientId) || '202liu94d4';
-    const address = CONFIG.wedding.address || CONFIG.wedding.venue;
-    let settled = false;
+    /* 지도는 iframe 으로 띄웁니다.
+       예전에는 네이버 지도 SDK 를 이 자리에 직접 그렸는데, SDK 가 만드는
+       내부 타일 <div>·<img> 들이 사이트 CSS(box-sizing, max-width, img 규칙 등)의
+       영향을 받아 타일이 어긋나고 그 이음새가 흰 십자 모양으로 드러났습니다.
+       iframe 은 별도의 문서라 바깥 CSS 가 절대 닿지 않으므로 그런 어긋남이
+       구조적으로 생길 수 없습니다. 길찾기는 아래 카카오맵·네이버지도·티맵
+       버튼이 각 앱으로 바로 연결해 줍니다. */
+    const w = CONFIG.wedding;
+    const query = encodeURIComponent(w.address || w.venue);
+    wrap.innerHTML = '';
 
-    // 로딩 중 흰 화면 대신 은은한 안내를 먼저 표시합니다.
-    wrap.innerHTML = '<div class="loc-map-loading">지도를 불러오는 중…</div>';
+    const iframe = document.createElement('iframe');
+    iframe.className = 'loc-map-frame';
+    iframe.setAttribute('title', (w.venue || '예식장') + ' 지도');
+    iframe.setAttribute('loading', 'lazy');
+    iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.style.cssText = 'display:block;width:100%;height:100%;border:0;margin:0;padding:0;';
+    iframe.src = 'https://maps.google.com/maps?q=' + query + '&z=16&hl=ko&output=embed';
 
-    function showGoogleFallback() {
-      if (settled) return;
-      settled = true;
-      wrap.innerHTML = '';
-      const query = encodeURIComponent(CONFIG.wedding.venue || CONFIG.wedding.address);
-      const iframe = document.createElement('iframe');
-      iframe.className = 'loc-map-frame';
-      iframe.setAttribute('title', '나비스퀘어 지도');
-      iframe.setAttribute('loading', 'lazy');
-      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-      iframe.src = `https://maps.google.com/maps?q=${query}&z=16&hl=ko&output=embed`;
-      wrap.appendChild(iframe);
-    }
+    // 어떤 이유로 지도를 못 불러오면 빈 회색 칸 대신 안내를 남깁니다.
+    iframe.addEventListener('error', function () {
+      wrap.innerHTML = '<div class="loc-map-loading">' + (w.address || w.venue) + '</div>';
+    }, { once: true });
 
-    function renderNaverMap() {
-      if (settled || !window.naver || !window.naver.maps) { showGoogleFallback(); return; }
-      try {
-        settled = true;
-        wrap.innerHTML = '';
-        const naver = window.naver;
-        // 아산 시청 인근 대략 좌표로 우선 중심을 잡고, 지오코딩 성공 시 정확한 위치로 이동합니다.
-        const fallbackCenter = new naver.maps.LatLng(36.7898, 127.0044);
-        const map = new naver.maps.Map(wrap, { center: fallbackCenter, zoom: 16 });
-
-        if (naver.maps.Service && address) {
-          naver.maps.Service.geocode({ query: address }, function (status, response) {
-            if (status !== naver.maps.Service.Status.OK) return;
-            const item = response?.v2?.addresses?.[0];
-            if (!item) return;
-            const point = new naver.maps.LatLng(item.y, item.x);
-            map.setCenter(point);
-            new naver.maps.Marker({ position: point, map });
-          });
-        } else {
-          new naver.maps.Marker({ position: fallbackCenter, map });
-        }
-      } catch (e) {
-        settled = false;
-        showGoogleFallback();
-      }
-    }
-
-    function loadNaverScript(param) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        // submodules=geocoder: 주소 → 좌표 변환(Service.geocode)에 필요
-        s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?${param}=${NAVER_CLIENT_ID}&submodules=geocoder`;
-        s.onload = () => {
-          // 인증 실패 시에도 onload는 정상 발생하므로, 실제 지도 객체 존재 여부로 재확인합니다.
-          if (window.naver && window.naver.maps && window.naver.maps.Map) resolve();
-          else reject(new Error('naver maps not ready'));
-        };
-        s.onerror = () => reject(new Error('script load failed'));
-        document.head.appendChild(s);
-      });
-    }
-
-    // 신규 콘솔(ncpKeyId) → 구 콘솔(ncpClientId) 순서로 시도합니다.
-    // 인증 실패는 스크립트 로드 "이후" 비동기로 통보되므로(navermap_authFailure),
-    // 콜백 안에서 남은 파라미터로 한 번 더 재시도한 뒤에야 구글 지도로 전환합니다.
-    const paramQueue = ['ncpClientId'];      // ncpKeyId 실패 시 남은 재시도 목록
-    let timeout = setTimeout(showGoogleFallback, 4000);
-
-    function tryLoad(param) {
-      loadNaverScript(param)
-        .then(() => {
-          clearTimeout(timeout);
-          // 렌더링 후에도 인증 실패 콜백이 올 수 있으므로 여유 타임아웃은 걸지 않습니다.
-          renderNaverMap();
-        })
-        .catch(() => {
-          clearTimeout(timeout);
-          const next = paramQueue.shift();
-          if (next) {
-            timeout = setTimeout(showGoogleFallback, 4000);
-            tryLoad(next);
-          } else {
-            showGoogleFallback();
-          }
-        });
-    }
-
-    // 네이버 공식 인증 실패 콜백 — 에러 패널 대신 이 함수가 조용히 호출됩니다.
-    window.navermap_authFailure = function () {
-      settled = false;
-      const next = paramQueue.shift();
-      if (next) {
-        clearTimeout(timeout);
-        wrap.innerHTML = '<div class="loc-map-loading">지도를 불러오는 중…</div>';
-        timeout = setTimeout(showGoogleFallback, 4000);
-        tryLoad(next);
-      } else {
-        showGoogleFallback();
-      }
-    };
-
-    tryLoad('ncpKeyId');
+    wrap.appendChild(iframe);
   }
 
   /* ── 오시는 길: 교통편 안내 (지도 버튼 아래) ── */
