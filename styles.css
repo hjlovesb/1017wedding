@@ -11422,15 +11422,21 @@ body .section .section__title::after { content: none !important; display: none !
 }
 
 .rsvp-modal__close {
-  top: 5% !important;
-  right: 12% !important;
-  width: 24px !important;
-  height: 24px !important;
+  position: absolute !important;
+  left: 50% !important;
+  bottom: 6% !important;
+  top: auto !important;
+  right: auto !important;
+  width: auto !important;
+  height: auto !important;
+  transform: translateX(-50%) !important;
   background: transparent !important;
   border: none !important;
-  color: rgba(120, 110, 96, 0.42) !important;
-  font-size: 1.16rem !important;
+  color: rgba(255, 255, 255, 0.42) !important;
+  font-size: 0.72rem !important;
+  letter-spacing: 0.04em !important;
   line-height: 1 !important;
+  padding: 6px 14px !important;
 }
 
 .rsvp-form { width: 100%; }
@@ -11832,7 +11838,7 @@ body .section .section__title::after { content: none !important; display: none !
 
 .dcal.is-in .dcal__day.is-wedding::after {
   opacity: 1 !important;
-  transform: scale(1) !important;
+  transform: scale(1) translateY(2.5px) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -11997,7 +12003,7 @@ body .section .section__title::after { content: none !important; display: none !
 .rsvp-hide-today { margin: 13px 0 0 !important; color: rgba(132, 122, 104, 0.6) !important; }
 
 /* ─── 1) Wedding Day ──────────────────────────────────────── */
-.dcal__grid { row-gap: 5px !important; }
+.dcal__grid { row-gap: 3px !important; }
 .dcal__day { height: 25px !important; }
 
 /* 사진이 뚝 나타나지 않도록 — 아주 옅게 확대되며 떠오릅니다 */
@@ -12290,14 +12296,26 @@ body .section .section__title::after { content: none !important; display: none !
 .cards__dots { display: flex; gap: 6px; }
 
 .cards__dot {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.cards__dot::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: 5px;
   height: 5px;
   border-radius: 50%;
+  transform: translate(-50%, -50%);
   background: rgba(140, 126, 104, 0.22);
   transition: background 0.5s ease, transform 0.5s ease;
 }
 
-.cards__dot.is-on { background: rgba(126, 100, 78, 0.62); transform: scale(1.3); }
+.cards__dot.is-on::before { background: rgba(126, 100, 78, 0.62); transform: translate(-50%, -50%) scale(1.3); }
 
 .cards.seq-reveal {
   opacity: 0;
@@ -12573,8 +12591,8 @@ body .section .section__title::after { content: none !important; display: none !
 
 /* ─── 1) Gallery ──────────────────────────────────────────── */
 .gallery__labels {
-  margin: 0 auto 11px !important;
-  padding: 0 0 9px !important;
+  margin: 0 auto 8px !important;
+  padding: 0 0 8px !important;
 }
 
 .gallery__labels span { font-size: 0.85rem !important; color: rgba(96, 90, 80, 0.88) !important; }
@@ -13100,8 +13118,8 @@ body { overflow-x: hidden; }
   letter-spacing: -0.03em !important;
 }
 
-.dcal__dateline { margin: 14px 0 0 !important; font-size: 0.98rem !important; }
-.dcal__dday { margin: 12px 0 0 !important; }
+.dcal__dateline { margin: 18px 0 0 !important; font-size: 0.98rem !important; }
+.dcal__dday { margin: 26px 0 0 !important; }
 
 /* ─── 4) OUR STORY — 겹쳐 쌓인 엽서 ──────────────────────── */
 .cards { position: relative; }
@@ -13593,9 +13611,9 @@ body { overflow-x: hidden; }
   height: auto !important;
   margin: 0 !important;
   border: 0 !important;
-  /* 위쪽이 버터베이지로 스며듭니다 (아래는 그대로) */
-  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 9%, rgba(0,0,0,0.78) 19%, rgba(0,0,0,1) 30%, rgba(0,0,0,1) 100%) !important;
-  mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 9%, rgba(0,0,0,0.78) 19%, rgba(0,0,0,1) 30%, rgba(0,0,0,1) 100%) !important;
+  /* 위/아래 모두 버터베이지로 스며듭니다 */
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 9%, rgba(0,0,0,0.78) 19%, rgba(0,0,0,1) 30%, rgba(0,0,0,1) 85%, rgba(0,0,0,0.55) 93%, rgba(0,0,0,0) 100%) !important;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 9%, rgba(0,0,0,0.78) 19%, rgba(0,0,0,1) 30%, rgba(0,0,0,1) 85%, rgba(0,0,0,0.55) 93%, rgba(0,0,0,0) 100%) !important;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-size: 100% 100%;
@@ -13930,7 +13948,8 @@ img { max-width: 100%; }
 .location__map-wrap img { max-width: none; }
 
 /* 사진이 로드되기 전 회색 깜빡임 방지 */
-.dcal__photo, .card__face, .info__photo, .tray { background-color: #EFEBE3; }
+.dcal__photo, .card__face, .info__photo { background-color: #EFEBE3; }
+.tray { background-color: #F7F2E6 !important; }
 
 html, body { overflow-x: hidden; }
 
@@ -14003,135 +14022,133 @@ body:not(.intro-active) .invitation {
   #curtain .curtain__frame { max-width: min(76vw, 320px) !important; }
 }
 
-
 /* ================================================================
-   v-FINAL-48 (2026-07-25)
-   1) 팝업 — 카드를 살짝 넓히고 간격을 좁혀 내용이 카드 안에 들어오게
-   2) OUR STORY — 2026 문구 확대
-   3) 지도 — iframe 이 칸을 정확히 채우게
+   v-FINAL-50 (2026-07-26)
+   1) RSVP 팝업 — 안내문 3줄로 원복, 체크박스 더 은은하게
+   2) OUR STORY — 책장 넘기듯 코너가 살짝 들리는 고급스러운 힌트 모션,
+      2026 은빛 글자 위로·자간 좁게
+   3) 맨하단 — 버튼 테두리 은은하게 (유지)
    ================================================================ */
 
 /* ─── 1) 팝업 ─────────────────────────────────────────────── */
-.rsvp-modal__panel {
-  width: min(88vw, 336px) !important;      /* 살짝 넓힘 */
-  max-height: 88vh !important;
-}
-
-.rsvp-card {
-  padding: 3.5% 11% 0 !important;          /* 좌우 여백을 줄여 글자 폭 확보 */
-  justify-content: center !important;
-}
-
-/* 예식일자 — 조금 더 크게, 한 줄 유지 */
-.rsvp-modal__date {
-  order: 1 !important;
-  margin: 0 !important;
-  font-size: clamp(0.86rem, 4.1vw, 1.02rem) !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.01em !important;
-  white-space: nowrap !important;
-}
-
-/* 안내문 — '참석여부를 알려주시면 감사하겠습니다' 가 한 줄에 */
 .rsvp-modal__summary {
-  order: 0 !important;
-  margin: 18px 0 8px !important;
-  font-size: clamp(0.63rem, 3.02vw, 0.74rem) !important;
-  line-height: 1.85 !important;
-  letter-spacing: -0.028em !important;
-  word-break: keep-all !important;
+  margin: 18px 0 9px !important;
+  font-size: clamp(0.66rem, 3.15vw, 0.78rem) !important;
+}
+.rsvp-modal__date {
+  font-size: clamp(0.7rem, 3.4vw, 0.9rem) !important;
 }
 
-.rsvp-modal__summary br { line-height: 1.85; }
-
-.rsvp-rule { order: 2; margin: 13px 0 11px !important; }
-.rsvp-form { order: 3 !important; }
-.rsvp-hide-today { order: 4 !important; }
-
-/* 입력 · 버튼 — 간격을 좁혀 카드 안에 모두 들어오게 */
-.rsvp-input {
-  padding: 6px 8px !important;
-  font-size: clamp(0.68rem, 3.2vw, 0.76rem) !important;
+/* 카드 좌우 패딩은 원래대로 — 안내문 마지막 줄이 다시 한 줄에 들어가
+   총 3줄 안내문으로 보입니다. 입력칸·선택버튼·전달버튼만 따로 좁힙니다. */
+.rsvp-card { padding: 4% 14% 0 !important; }
+.rsvp-input,
+.rsvp-choice-group,
+.rsvp-submit {
+  width: 86% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
-.rsvp-choice-group { margin: 9px 0 9px !important; gap: 6px !important; }
-.rsvp-choice-group label { padding: 5px 0 !important; font-size: clamp(0.62rem, 3vw, 0.7rem) !important; }
-
-.rsvp-submit { padding: 8px 0 !important; font-size: clamp(0.64rem, 3.05vw, 0.72rem) !important; }
-.rsvp-message { margin: 6px 0 0 !important; font-size: clamp(0.58rem, 2.8vw, 0.66rem) !important; }
-.rsvp-hide-today { margin: 9px 0 0 !important; font-size: clamp(0.54rem, 2.6vw, 0.6rem) !important; }
-
-/* 화면이 짧은 기기 — 더 촘촘하게 */
-@media (max-height: 780px) {
-  .rsvp-modal__panel { width: min(84vw, 306px) !important; }
-  .rsvp-card { padding: 2.5% 10% 0 !important; }
-  .rsvp-modal__summary { margin: 13px 0 7px !important; line-height: 1.78 !important; }
-  .rsvp-rule { margin: 10px 0 9px !important; }
-  .rsvp-choice-group { margin: 7px 0 7px !important; }
-  .rsvp-input { padding: 5px 7px !important; }
-  .rsvp-submit { padding: 7px 0 !important; }
-  .rsvp-hide-today { margin-top: 7px !important; }
+/* 오늘 하루 보지 않기 — 더욱 은은하게 (거의 안 보일 듯) */
+.rsvp-hide-today {
+  gap: 4px !important;
+  opacity: 0.4 !important;
+  color: rgba(126, 118, 104, 0.42) !important;
+  transition: opacity 0.4s ease !important;
 }
-
-@media (max-height: 680px) {
-  .rsvp-card { padding: 1.5% 9% 0 !important; }
-  .rsvp-modal__summary { margin: 9px 0 6px !important; line-height: 1.7 !important; }
-  .rsvp-rule { margin: 8px 0 7px !important; }
-  .rsvp-choice-group { margin: 6px 0 6px !important; }
+.rsvp-hide-today input {
+  width: 10px !important;
+  height: 10px !important;
+  accent-color: rgba(126, 112, 96, 0.22) !important;
+  opacity: 0.55 !important;
 }
+.rsvp-hide-today:active,
+.rsvp-hide-today:focus-within { opacity: 0.85 !important; }
 
-/* ─── 2) OUR STORY — 2026 문구 확대 ──────────────────────── */
-.card__yr {
-  left: 5% !important;
-  right: 5% !important;
-  bottom: 25% !important;
-  gap: 11px !important;
-}
+/* ─── 2) OUR STORY — 요청에 따라 힌트 모션은 걷어내고 원래대로 둡니다 ─── */
 
-.card__yr i,
-.card__yr b {
-  font-size: clamp(1.34rem, 6.7vw, 1.96rem) !important;
-  letter-spacing: 0.015em !important;
-  text-indent: 0.015em !important;
-  transform: scaleX(0.92);
-}
-
-/* ─── 3) 지도 — iframe 이 칸을 꽉 채우게 ─────────────────── */
-.location__map-wrap {
-  position: relative !important;
-  width: 100% !important;
-  height: 280px !important;
-  overflow: hidden !important;
-  background: #eeeae2 !important;
-  border-radius: 0 !important;
-  padding: 0 !important;
-}
-
-.location__map-wrap iframe,
-.loc-map-frame {
-  display: block !important;
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  border: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-}
-
-.loc-map-loading {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  font-family: 'Noto Serif KR', serif !important;
-  font-size: 0.82rem !important;
+/* 2026 은빛 글자 — 조금 더 위로, 줄간격 최소화, WEDDING DAY 자간 살짝 여유·크기 확대 */
+.card__yr { bottom: 25% !important; gap: 0 !important; }
+.card__yr i, .card__yr b {
+  font-size: clamp(1.65rem, 7.8vw, 2.35rem) !important;
   font-weight: 300 !important;
-  color: rgba(96, 88, 74, 0.7) !important;
-  text-align: center !important;
-  padding: 0 18px !important;
-  box-sizing: border-box !important;
+  transform: scaleX(0.68) !important;
 }
+.card__yr i {
+  letter-spacing: -0.015em !important;
+  text-indent: -0.015em !important;
+  font-size: clamp(2.05rem, 9.7vw, 2.85rem) !important;
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 2% !important;
+}
+.card__yr b { margin-top: -4px !important; }
+
+/* 부채처럼 펼쳐진 뒤쪽 엽서에서 그림자가 테두리선처럼 보이는 문제 — 뒤쪽은 그림자 제거 */
+.card:not(.is-current) .card__inner { box-shadow: none !important; }
+
+.cards__stage { position: relative; z-index: 1; }
+
+/* ─── OUR STORY — 겹쳐 쌓인 스택이 원을 그리듯 순환 (JS가 각 카드의 깊이를 계산) ─── */
+.card {
+  transition: opacity 1.05s cubic-bezier(0.22, 0.61, 0.32, 1), transform 1.05s cubic-bezier(0.22, 0.61, 0.32, 1), filter 1.05s cubic-bezier(0.22, 0.61, 0.32, 1);
+  pointer-events: auto !important;
+  will-change: transform, opacity, filter;
+}
+
+/* 뒤로 물러난 카드들도 가장자리가 또렷하게 보여서 몇 장인지 알 수 있게 */
+.card:not(.is-current) .card__face {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 2px 6px rgba(40, 34, 24, 0.18);
+}
+/* ─── 맨하단 은쟁반 — 빛 효과 제거함(요청) ─── */
+
+/* ─── Wedding Day — 사진 박스를 다시 정사각형으로(달력 가로폭과 동일), 전체 크기 축소 ─── */
+.dcal__photo {
+  aspect-ratio: 650 / 578 !important;
+  height: auto !important;
+  width: 180px !important;
+  max-width: 54% !important;
+  margin: 0 auto 26px !important;
+}
+.dcal__photo img { object-fit: cover !important; }
+.dcal__grid { max-width: 180px !important; column-gap: 0 !important; row-gap: 0 !important; }
+.dcal__dateline { margin: 10px 0 0 !important; font-size: 0.86rem !important; }
+.dcal__month { margin: 0 0 14px !important; font-size: 1.2rem !important; }
+.dcal__day {
+  height: 22px !important;
+}
+.dcal__day i {
+  display: inline-block !important;
+  font-style: normal !important;
+  font-size: 0.98rem !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+.dcal__day.is-wedding i {
+  font-size: 1.1rem !important;
+  color: #ffffff !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+  -webkit-text-fill-color: #ffffff !important;
+  animation: none !important;
+  filter: none !important;
+}
+.dcal__day.is-wedding::after {
+  inset: 0 !important;
+  left: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  margin: auto !important;
+  width: 22px !important;
+  height: 22px !important;
+  transform: translateY(2.5px) !important;
+}
+.dcal__dday b { font-size: 1.2rem !important; }
+.dcal__dday { font-size: clamp(0.7rem, 3.4vw, 0.88rem) !important; }
+
+/* ─── 3) 맨하단 버튼 — 흰 테두리를 은은하게 ─────────────────── */
+.fbtn { border: 1px solid rgba(255, 255, 255, 0.16) !important; }

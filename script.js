@@ -519,7 +519,7 @@ async function initCalendar() {
   for (let day = 1; day <= lastDay; day++) {
     const dow = (firstDow + day - 1) % 7;
     const cls = (day === d ? ' is-wedding' : '') + (dow === 0 ? ' is-sun' : '');
-    cells += `<span class="dcal__day${cls}">${day}</span>`;
+    cells += `<span class="dcal__day${cls}"><i>${day}</i></span>`;
   }
 
   el.innerHTML = `
@@ -693,7 +693,7 @@ function initGallerySlider() {
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const MOVE_MS = 1250;
   const HOLD_MS = 2000;
-  const GAP = 10;
+  const GAP = 6;
   const SETS = 3;
 
   const src = galleryImages.slice();
@@ -725,7 +725,7 @@ function initGallerySlider() {
     cell.style.cssText = [
       'position:relative', 'flex:0 0 auto', 'height:100%',
       'overflow:visible', 'cursor:pointer',
-      'transform:scale(0.955)', 'opacity:0.55',
+      'transform:scale(1)', 'opacity:0.55',
       'transform-origin:center center',
       'transition:' + CELL_TRANS,
       'will-change:transform'
@@ -790,7 +790,8 @@ function initGallerySlider() {
   function mark() {
     for (let n = 0; n < N; n++) {
       const on = n === index;
-      cells[n].style.transform = on ? 'scale(1.045)' : 'scale(0.955)';
+      cells[n].style.transition = dragging ? 'opacity 1.25s ease, filter 1.25s ease' : CELL_TRANS;
+      cells[n].style.transform = dragging ? 'scale(1)' : (on ? 'scale(1.045)' : 'scale(0.955)');
       cells[n].style.opacity = on ? '1' : '0.55';
       cells[n].style.zIndex = on ? '2' : '1';
       // 가운데 사진 아래에만 아주 옅은 그림자로 깊이를 줍니다
@@ -864,6 +865,7 @@ function initGallerySlider() {
     sx = px; sy = py; lastX = px; lastDx = 0;
     startX = x;
     clearTimeout(timer);
+    mark();   // 터치를 시작하는 순간 확대 착시를 없애고 평평한 슬라이드로
   }
 
   function drag(px, py, ev) {
@@ -930,14 +932,33 @@ function initGallerySlider() {
     }
   });
 
-  document.addEventListener('click', function () {
+  /* 확대보기(라이트박스)가 열리고 닫힐 때 정확히 통지받아 자동 흐름을
+     멈추고 다시 이어갑니다. 예전에는 문서 전역 click 순서에 의존했는데,
+     닫기 버튼을 눌렀을 때 캡처링 리스너가 아직 닫히기 '전' 상태를 읽어
+     paused 가 true 로 고정된 채 풀리지 않는 오류가 있었습니다. */
+  function syncViewerPaused() {
     const v = document.getElementById('viewer');
-    paused = !!(v && (v.classList.contains('is-active') || v.classList.contains('show')));
-  }, true);
+    const wasPaused = paused;
+    paused = !!(v && v.classList.contains('is-active'));
+    if (wasPaused && !paused) tick();   // 닫히는 즉시 흐름을 바로 되살립니다
+  }
+  window.addEventListener('gallery:viewer', syncViewerPaused);
+  syncViewerPaused();
 
+  let firstReveal = true;
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { inView = en.isIntersecting; });
+      entries.forEach(function (en) {
+        inView = en.isIntersecting;
+        if (inView && firstReveal && !prefersReduced) {
+          firstReveal = false;
+          clearTimeout(timer);
+          timer = setTimeout(function () {
+            if (!paused && !dragging && inView && !animating) goTo(index + 1, true);
+            tick();
+          }, 900);   // 첫 사진이 눈에 들어올 잠깐의 여유를 주고 자연스럽게 움직이기 시작합니다
+        }
+      });
     }, { threshold: 0.05 }).observe(view);
   }
 
@@ -1009,14 +1030,14 @@ function initViewer() {
     if (counter) counter.textContent = `${realIndex + 1} / ${galleryImages.length}`;
   }
 
-  function moveTo(px, animate) {
-    track.style.transition = animate ? 'transform 720ms cubic-bezier(.25,.8,.25,1)' : 'none';
+  function moveTo(px, animate, ms) {
+    track.style.transition = animate ? `transform ${ms || 620}ms cubic-bezier(.22,.75,.2,1)` : 'none';
     track.style.transform = `translate3d(${px}px,0,0)`;
   }
 
-  function snap(animate = true) {
+  function snap(animate = true, ms) {
     measure();
-    moveTo(-virtualIndex * slideWidth, animate);
+    moveTo(-virtualIndex * slideWidth, animate, ms);
     updateCounter();
   }
 
@@ -1051,7 +1072,6 @@ function initViewer() {
     viewer.classList.add('is-active');
     viewer.setAttribute('aria-hidden', 'false');
     document.documentElement.classList.add('viewer-open');
-    document.body.style.overflow = 'hidden';
     requestAnimationFrame(() => requestAnimationFrame(() => snap(false)));
     window.dispatchEvent(new CustomEvent('gallery:viewer'));
   }
@@ -1061,7 +1081,6 @@ function initViewer() {
     viewer.classList.remove('is-active');
     viewer.setAttribute('aria-hidden', 'true');
     document.documentElement.classList.remove('viewer-open');
-    document.body.style.overflow = '';
     window.dispatchEvent(new CustomEvent('gallery:viewer'));
   }
 
@@ -1120,13 +1139,15 @@ function initViewer() {
   let tDecided = false, tHoriz = false, tStartY = 0;
 
   track.addEventListener('touchstart', (e) => {
-    if (!e.touches[0] || e.touches.length > 1) return;
+    if (!e.touches[0]) return;
+    if (e.touches.length > 1) { if (e.cancelable) e.preventDefault(); return; }  // 두 손가락 핀치 차단
     tDecided = false; tHoriz = false;
     tStartY = e.touches[0].clientY;
     begin(e.touches[0].clientX, 'touch');
-  }, { passive: true });
+  }, { passive: false });
 
   track.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1) { if (e.cancelable) e.preventDefault(); return; }  // 핀치 확대가 브라우저 UI를 건드리지 않도록
     if (!dragging || !e.touches[0]) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - tStartY;
@@ -1257,19 +1278,39 @@ async function initStoryPost() {
 
   if (dotsBox) {
     dotsBox.innerHTML = cards.map(function (_, i2) {
-      return '<i class="cards__dot' + (i2 === 0 ? ' is-on' : '') + '"></i>';
+      return '<i class="cards__dot' + (i2 === 0 ? ' is-on' : '') + '" data-idx="' + i2 + '"></i>';
     }).join('');
+    dotsBox.setAttribute('aria-hidden', 'false');
   }
   const dots = dotsBox ? Array.prototype.slice.call(dotsBox.children) : [];
+  dots.forEach(function (dot, i2) {
+    dot.addEventListener('click', function () {
+      if (i2 === cur) return;
+      cards[cur].classList.remove('is-flipped');
+      cur = i2;
+      sync();
+    });
+  });
 
   function sync() {
     cards.forEach(function (el, i2) {
+      const diff = (i2 - cur + cards.length) % cards.length;
       el.classList.toggle('is-current', i2 === cur);
-      el.style.zIndex = String(cards.length - Math.abs(i2 - cur));
+      if (diff === 0) {
+        el.style.transform = 'translateY(0px) translateX(0px) rotate(0deg) scale(1)';
+        el.style.opacity = '1';
+        el.style.filter = 'none';
+      } else {
+        // 정갈하게 뒤로 차곡차곡 쌓입니다 — 각도 없이 곧게, 깊이만 다르게
+        const arcY = diff * 12;
+        const shrink = 1 - diff * 0.055;
+        el.style.transform = 'translateY(' + arcY + 'px) scale(' + shrink + ')';
+        el.style.opacity = String(Math.max(0.6, 1 - diff * 0.2));
+        el.style.filter = 'brightness(' + (1 - diff * 0.06) + ')';
+      }
+      el.style.zIndex = String(cards.length - diff);
     });
     dots.forEach(function (dot, i2) { dot.classList.toggle('is-on', i2 === cur); });
-    if (prevBtn) prevBtn.disabled = cur === 0;
-    if (nextBtn) nextBtn.disabled = cur === cards.length - 1;
     if (hint) {
       if (cards[cur].getAttribute('data-flip') === '0') hint.textContent = '';
       else hint.textContent = cards[cur].classList.contains('is-flipped')
@@ -1278,18 +1319,23 @@ async function initStoryPost() {
     }
   }
 
-  cards.forEach(function (el) {
+  cards.forEach(function (el, i2) {
     el.addEventListener('click', function () {
-      if (!el.classList.contains('is-current')) return;
-      if (el.getAttribute('data-flip') === '0') return;
+      if (!el.classList.contains('is-current')) {
+        cards[cur].classList.remove('is-flipped');
+        cur = i2;
+        sync();
+        return;
+      }
+      if (el.getAttribute('data-flip') === '0') { move(1); return; }
+      if (el.classList.contains('is-flipped')) { move(1); return; }
       el.classList.toggle('is-flipped');
       sync();
     });
   });
 
   function move(dir) {
-    const next = cur + dir;
-    if (next < 0 || next >= cards.length) return;
+    const next = (cur + dir + cards.length) % cards.length;
     cards[cur].classList.remove('is-flipped');
     cur = next;
     sync();
@@ -1315,8 +1361,8 @@ async function initStoryPost() {
     const t = e.changedTouches && e.changedTouches[0];
     if (!t) return;
     const dx = t.clientX - sx2;
-    if (dx < -40) move(1);
-    else if (dx > 40) move(-1);
+    if (dx < -30) move(1);
+    else if (dx > 30) move(-1);
   });
 
   sync();
@@ -1447,54 +1493,146 @@ async function initStoryPost() {
       } catch (e) { /* 아래 공유 시트/복사로 폴백 */ }
 
       // 2순위: 휴대폰 기본 공유 시트 (카카오톡 선택 가능)
-      // navigator.share가 존재해도 인앱 브라우저에서 즉시 reject 되는 경우가 있어
-      // 반드시 .catch로 받아 항상 클립보드 복사로 자연스럽게 이어지도록 합니다.
-      try {
-        if (navigator.share) {
-          navigator.share(shareData).catch((e) => {
+      // 안드로이드 일부 브라우저(특히 삼성 인터넷)는 navigator.share 가
+      // Promise 거부가 아니라 "동기적으로" 예외를 던지는 경우가 있습니다.
+      // 그 경우 아래 try 블록이 예외를 삼키고 return 을 건너뛰어 버려서,
+      // 공유 시트가 뜨기도 전에 곧바로 3순위(클립보드 복사)로 떨어지는
+      // 오류가 있었습니다. Promise.resolve().then(...) 으로 감싸 동기 예외까지
+      // 항상 .catch 로만 처리되도록 통일합니다.
+      if (navigator.share) {
+        Promise.resolve()
+          .then(() => navigator.share(shareData))
+          .catch((e) => {
             if (e && e.name === 'AbortError') return; // 사용자가 공유 시트를 직접 취소
             doClipboardFallback();
           });
-          return;
-        }
-      } catch (e) { /* 아래 복사로 폴백 */ }
+        return;
+      }
 
       // 3순위: 링크 복사
       doClipboardFallback();
     });
   }
 
-  /* ── 지도 ── */
+  /* ── 지도: 네이버 지도 우선 시도 → 실패 시 자동으로 구글 지도 임베드로 전환 ──
+     네이버 Open API는 콘솔 등록이 안 맞으면 화면에 "인증이 실패했습니다"라는
+     보기 안좋은 에러 패널을 그대로 노출합니다. 이를 막기 위해
+     1) window.navermap_authFailure 콜백(네이버 공식 훅)을 미리 등록해 인증 실패를
+        조용히 감지하고, 2) 스크립트 자체가 로드되지 않거나 3초 안에 정상
+        렌더링되지 않는 경우까지 포함해 항상 구글 지도 임베드로 자연스럽게
+        전환되도록 했습니다. 즉, 네이버 콘솔 설정이 맞으면 네이버 지도가,
+        아직 안 맞으면 사용자 눈에 보이지 않게 구글 지도가 대신 뜹니다. */
   function initMap() {
     const wrap = document.getElementById('loc-map-wrap');
     if (!wrap) return;
 
-    /* 지도는 iframe 으로 띄웁니다.
-       예전에는 네이버 지도 SDK 를 이 자리에 직접 그렸는데, SDK 가 만드는
-       내부 타일 <div>·<img> 들이 사이트 CSS(box-sizing, max-width, img 규칙 등)의
-       영향을 받아 타일이 어긋나고 그 이음새가 흰 십자 모양으로 드러났습니다.
-       iframe 은 별도의 문서라 바깥 CSS 가 절대 닿지 않으므로 그런 어긋남이
-       구조적으로 생길 수 없습니다. 길찾기는 아래 카카오맵·네이버지도·티맵
-       버튼이 각 앱으로 바로 연결해 줍니다. */
-    const w = CONFIG.wedding;
-    const query = encodeURIComponent(w.address || w.venue);
-    wrap.innerHTML = '';
+    // 네이버 지도 키는 config.js의 map.naverClientId에서 읽습니다.
+    // 이 키가 네이버 클라우드 콘솔에 "배포된 도메인"과 함께 등록되어 있어야
+    // 네이버 지도가 뜨고, 인증이 실패하면 자동으로 구글 지도로 대체됩니다.
+    const NAVER_CLIENT_ID = (typeof CONFIG !== 'undefined' && CONFIG.map && CONFIG.map.naverClientId) || '202liu94d4';
+    const address = CONFIG.wedding.address || CONFIG.wedding.venue;
+    let settled = false;
 
-    const iframe = document.createElement('iframe');
-    iframe.className = 'loc-map-frame';
-    iframe.setAttribute('title', (w.venue || '예식장') + ' 지도');
-    iframe.setAttribute('loading', 'lazy');
-    iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.style.cssText = 'display:block;width:100%;height:100%;border:0;margin:0;padding:0;';
-    iframe.src = 'https://maps.google.com/maps?q=' + query + '&z=16&hl=ko&output=embed';
+    // 로딩 중 흰 화면 대신 은은한 안내를 먼저 표시합니다.
+    wrap.innerHTML = '<div class="loc-map-loading">지도를 불러오는 중…</div>';
 
-    // 어떤 이유로 지도를 못 불러오면 빈 회색 칸 대신 안내를 남깁니다.
-    iframe.addEventListener('error', function () {
-      wrap.innerHTML = '<div class="loc-map-loading">' + (w.address || w.venue) + '</div>';
-    }, { once: true });
+    function showGoogleFallback() {
+      if (settled) return;
+      settled = true;
+      wrap.innerHTML = '';
+      const query = encodeURIComponent(CONFIG.wedding.venue || CONFIG.wedding.address);
+      const iframe = document.createElement('iframe');
+      iframe.className = 'loc-map-frame';
+      iframe.setAttribute('title', '나비스퀘어 지도');
+      iframe.setAttribute('loading', 'lazy');
+      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      iframe.src = `https://maps.google.com/maps?q=${query}&z=16&hl=ko&output=embed`;
+      wrap.appendChild(iframe);
+    }
 
-    wrap.appendChild(iframe);
+    function renderNaverMap() {
+      if (settled || !window.naver || !window.naver.maps) { showGoogleFallback(); return; }
+      try {
+        settled = true;
+        wrap.innerHTML = '';
+        const naver = window.naver;
+        // 아산 시청 인근 대략 좌표로 우선 중심을 잡고, 지오코딩 성공 시 정확한 위치로 이동합니다.
+        const fallbackCenter = new naver.maps.LatLng(36.7898, 127.0044);
+        const map = new naver.maps.Map(wrap, { center: fallbackCenter, zoom: 16 });
+
+        if (naver.maps.Service && address) {
+          naver.maps.Service.geocode({ query: address }, function (status, response) {
+            if (status !== naver.maps.Service.Status.OK) return;
+            const item = response?.v2?.addresses?.[0];
+            if (!item) return;
+            const point = new naver.maps.LatLng(item.y, item.x);
+            map.setCenter(point);
+            new naver.maps.Marker({ position: point, map });
+          });
+        } else {
+          new naver.maps.Marker({ position: fallbackCenter, map });
+        }
+      } catch (e) {
+        settled = false;
+        showGoogleFallback();
+      }
+    }
+
+    function loadNaverScript(param) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        // submodules=geocoder: 주소 → 좌표 변환(Service.geocode)에 필요
+        s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?${param}=${NAVER_CLIENT_ID}&submodules=geocoder`;
+        s.onload = () => {
+          // 인증 실패 시에도 onload는 정상 발생하므로, 실제 지도 객체 존재 여부로 재확인합니다.
+          if (window.naver && window.naver.maps && window.naver.maps.Map) resolve();
+          else reject(new Error('naver maps not ready'));
+        };
+        s.onerror = () => reject(new Error('script load failed'));
+        document.head.appendChild(s);
+      });
+    }
+
+    // 신규 콘솔(ncpKeyId) → 구 콘솔(ncpClientId) 순서로 시도합니다.
+    // 인증 실패는 스크립트 로드 "이후" 비동기로 통보되므로(navermap_authFailure),
+    // 콜백 안에서 남은 파라미터로 한 번 더 재시도한 뒤에야 구글 지도로 전환합니다.
+    const paramQueue = ['ncpClientId'];      // ncpKeyId 실패 시 남은 재시도 목록
+    let timeout = setTimeout(showGoogleFallback, 4000);
+
+    function tryLoad(param) {
+      loadNaverScript(param)
+        .then(() => {
+          clearTimeout(timeout);
+          // 렌더링 후에도 인증 실패 콜백이 올 수 있으므로 여유 타임아웃은 걸지 않습니다.
+          renderNaverMap();
+        })
+        .catch(() => {
+          clearTimeout(timeout);
+          const next = paramQueue.shift();
+          if (next) {
+            timeout = setTimeout(showGoogleFallback, 4000);
+            tryLoad(next);
+          } else {
+            showGoogleFallback();
+          }
+        });
+    }
+
+    // 네이버 공식 인증 실패 콜백 — 에러 패널 대신 이 함수가 조용히 호출됩니다.
+    window.navermap_authFailure = function () {
+      settled = false;
+      const next = paramQueue.shift();
+      if (next) {
+        clearTimeout(timeout);
+        wrap.innerHTML = '<div class="loc-map-loading">지도를 불러오는 중…</div>';
+        timeout = setTimeout(showGoogleFallback, 4000);
+        tryLoad(next);
+      } else {
+        showGoogleFallback();
+      }
+    };
+
+    tryLoad('ncpKeyId');
   }
 
   /* ── 오시는 길: 교통편 안내 (지도 버튼 아래) ── */
@@ -1755,9 +1893,9 @@ async function initStoryPost() {
       opacity: var(--opacity);
       animation: luxStarTwinkle var(--twinkle) ease-in-out var(--delay) infinite;
       filter:
-        drop-shadow(0 0 2px rgba(255,255,255,0.58))
-        drop-shadow(0 0 5px rgba(248,230,200,0.30))
-        drop-shadow(0 0 9px rgba(255,247,236,0.12));
+        drop-shadow(0 0 2.5px rgba(255,255,255,0.75))
+        drop-shadow(0 0 6px rgba(248,230,200,0.4))
+        drop-shadow(0 0 11px rgba(255,247,236,0.2));
     }
 
     .lux-star svg {
@@ -1925,17 +2063,17 @@ async function initStoryPost() {
   ];
 
   function makeSparkleSVG(color, variant) {
-    // 4-point sparkle
+    // 4-point sparkle — 가늘고 은은하게
     if (variant === 1) {
       return `
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <g fill="none" stroke="${color}" stroke-linecap="round">
-            <path d="M50 10 L50 90" stroke-width="4.6" opacity="0.98"/>
-            <path d="M10 50 L90 50" stroke-width="4.6" opacity="0.98"/>
-            <path d="M50 28 L50 72" stroke-width="1.4" opacity="0.36"/>
-            <path d="M28 50 L72 50" stroke-width="1.4" opacity="0.36"/>
+            <path d="M50 14 L50 86" stroke-width="2.6" opacity="0.92"/>
+            <path d="M14 50 L86 50" stroke-width="2.6" opacity="0.92"/>
+            <path d="M50 30 L50 70" stroke-width="1.1" opacity="0.34"/>
+            <path d="M30 50 L70 50" stroke-width="1.1" opacity="0.34"/>
           </g>
-          <path d="M50 44 L56 50 L50 56 L44 50 Z" fill="${color}" opacity="0.88"/>
+          <path d="M50 45 L55 50 L50 55 L45 50 Z" fill="${color}" opacity="0.76"/>
         </svg>
       `;
     }
@@ -1945,12 +2083,12 @@ async function initStoryPost() {
       return `
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <g fill="none" stroke="${color}" stroke-linecap="round">
-            <path d="M50 12 L50 88" stroke-width="4.0" opacity="0.96"/>
-            <path d="M12 50 L88 50" stroke-width="4.0" opacity="0.96"/>
-            <path d="M24 24 L76 76" stroke-width="2.0" opacity="0.48"/>
-            <path d="M76 24 L24 76" stroke-width="2.0" opacity="0.48"/>
+            <path d="M50 16 L50 84" stroke-width="2.3" opacity="0.9"/>
+            <path d="M16 50 L84 50" stroke-width="2.3" opacity="0.9"/>
+            <path d="M27 27 L73 73" stroke-width="1.2" opacity="0.4"/>
+            <path d="M73 27 L27 73" stroke-width="1.2" opacity="0.4"/>
           </g>
-          <circle cx="50" cy="50" r="2.6" fill="${color}" opacity="0.82"/>
+          <circle cx="50" cy="50" r="2.1" fill="${color}" opacity="0.76"/>
         </svg>
       `;
     }
@@ -1959,12 +2097,12 @@ async function initStoryPost() {
     return `
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <g fill="none" stroke="${color}" stroke-linecap="round">
-          <path d="M50 14 L50 86" stroke-width="3.8" opacity="0.98"/>
-          <path d="M14 50 L86 50" stroke-width="3.8" opacity="0.98"/>
-          <path d="M31 31 L69 69" stroke-width="1.3" opacity="0.24"/>
-          <path d="M69 31 L31 69" stroke-width="1.3" opacity="0.24"/>
+          <path d="M50 18 L50 82" stroke-width="2.1" opacity="0.92"/>
+          <path d="M18 50 L82 50" stroke-width="2.1" opacity="0.92"/>
+          <path d="M33 33 L67 67" stroke-width="0.9" opacity="0.26"/>
+          <path d="M67 33 L33 67" stroke-width="0.9" opacity="0.26"/>
         </g>
-        <path d="M50 40 L60 50 L50 60 L40 50 Z" fill="${color}" opacity="0.78"/>
+        <path d="M50 42 L58 50 L50 58 L42 50 Z" fill="${color}" opacity="0.68"/>
       </svg>
     `;
   }
@@ -1972,7 +2110,7 @@ async function initStoryPost() {
   function createSparkles() {
     layer.innerHTML = "";
 
-    const count = window.innerWidth < 420 ? 30 : 42;
+    const count = window.innerWidth < 420 ? 62 : 72;
 
     for (let i = 0; i < count; i++) {
       const el = document.createElement("span");
@@ -1985,23 +2123,23 @@ async function initStoryPost() {
       let size, opacity, fall, twinkle, sway;
 
       if (depth > 0.75) {
-  size = rand(6.5, 9.2);
-  opacity = rand(0.52, 0.72);
-  fall = rand(8.5, 12.5);
-  twinkle = rand(1.8, 2.8);
-  sway = rand(-28, 28);
+  size = rand(6, 8.6);
+  opacity = rand(0.58, 0.78);
+  fall = rand(9, 13);
+  twinkle = rand(1.9, 2.9);
+  sway = rand(-26, 26);
 } else if (depth > 0.38) {
-  size = rand(4.6, 6.8);
-  opacity = rand(0.34, 0.54);
-  fall = rand(11, 16);
-  twinkle = rand(2.3, 3.6);
-  sway = rand(-24, 24);
+  size = rand(4.4, 6.2);
+  opacity = rand(0.4, 0.58);
+  fall = rand(12, 17);
+  twinkle = rand(2.4, 3.7);
+  sway = rand(-22, 22);
 } else {
-  size = rand(3.0, 4.6);
-  opacity = rand(0.18, 0.32);
-  fall = rand(14, 20);
-  twinkle = rand(3.0, 4.4);
-  sway = rand(-20, 20);
+  size = rand(3, 4.3);
+  opacity = rand(0.26, 0.38);
+  fall = rand(15, 21);
+  twinkle = rand(3.1, 4.5);
+  sway = rand(-18, 18);
 }
 
       const color = pick(tones);
