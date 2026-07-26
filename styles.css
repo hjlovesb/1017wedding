@@ -14032,8 +14032,8 @@ body:not(.intro-active) .invitation {
 
 /* ─── 1) 팝업 ─────────────────────────────────────────────── */
 .rsvp-modal__summary {
-  margin: 18px 0 9px !important;
-  font-size: clamp(0.66rem, 3.15vw, 0.78rem) !important;
+  margin: 14px 0 9px !important;
+  font-size: clamp(0.6rem, 2.85vw, 0.7rem) !important;
 }
 .rsvp-modal__date {
   font-size: clamp(0.7rem, 3.4vw, 0.9rem) !important;

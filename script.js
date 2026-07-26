@@ -1558,7 +1558,14 @@ async function initStoryPost() {
         const naver = window.naver;
         // 아산 시청 인근 대략 좌표로 우선 중심을 잡고, 지오코딩 성공 시 정확한 위치로 이동합니다.
         const fallbackCenter = new naver.maps.LatLng(36.7898, 127.0044);
-        const map = new naver.maps.Map(wrap, { center: fallbackCenter, zoom: 16 });
+        const map = new naver.maps.Map(wrap, {
+          center: fallbackCenter,
+          zoom: 16,
+          zoomControl: false,
+          mapDataControl: false,
+          logoControl: false,
+          scaleControl: false,
+        });
 
         if (naver.maps.Service && address) {
           naver.maps.Service.geocode({ query: address }, function (status, response) {
