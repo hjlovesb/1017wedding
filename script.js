@@ -827,10 +827,8 @@ function initGallerySlider() {
     animating = true;
     (function frame(now) {
       const t = Math.min(1, (now - t0) / ms);
-      // 아주 완만하게 출발해 소리 없이 멈추는 곡선
-      const e = t < 0.5
-        ? 4 * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      // 손을 놓는 순간 바로 반응하고 부드럽게 안착 (뷰어와 같은 느낌의 ease-out)
+      const e = 1 - Math.pow(1 - t, 3);
       x = from + delta * e;
       apply();
       if (t < 1) raf = requestAnimationFrame(frame);
@@ -1584,6 +1582,20 @@ async function initStoryPost() {
         } else {
           new naver.maps.Marker({ position: fallbackCenter, map, icon: markerIcon });
         }
+        // 지도 생성 시점에 컨테이너 크기가 아직 확정되지 않았으면(스크롤 reveal 애니메이션 등)
+        // 네이버 지도가 잘못된(보통 더 작은) 크기로 타일을 계산해버려서, 화면에는
+        // 네 귀퉁이만 타일이 채워지고 가운데가 십자 모양으로 텅 비는 버그가 생깁니다.
+        // 컨테이너가 실제 크기로 자리잡을 때마다 지도에 리사이즈를 강제로 알려줍니다.
+        function refreshMapSize() {
+          naver.maps.Event.trigger(map, 'resize');
+          map.autoResize && map.autoResize();
+        }
+        [0, 60, 160, 320, 650, 1200].forEach((ms) => setTimeout(refreshMapSize, ms));
+        if (window.ResizeObserver) {
+          new ResizeObserver(refreshMapSize).observe(wrap);
+        }
+        window.addEventListener('resize', refreshMapSize);
+        window.addEventListener('orientationchange', refreshMapSize);
       } catch (e) {
         settled = false;
         showGoogleFallback();
