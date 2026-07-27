@@ -14165,8 +14165,8 @@ body:not(.intro-active) .invitation {
   font-family: 'Cormorant Garamond', 'Times New Roman', serif !important;
 }
 .rsvp-modal__date {
-  font-size: clamp(calc(0.7rem - 0.0333rem), 3.4vw, calc(0.9rem - 0.0333rem)) !important;
+  font-size: clamp(calc(0.7rem - 0.025rem), 3.4vw, calc(0.9rem - 0.025rem)) !important;
 }
 .rsvp-modal__date .rsvp-date-num {
-  font-size: clamp(calc(0.7rem + 0.05rem), 3.4vw, calc(0.9rem + 0.05rem)) !important;
+  font-size: clamp(calc(0.7rem + 0.0333rem), 3.4vw, calc(0.9rem + 0.0333rem)) !important;
 }

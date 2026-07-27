@@ -692,7 +692,7 @@ function initGallerySlider() {
 
   const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const MOVE_MS = 1250;
-  const HOLD_MS = 2000;
+  const HOLD_MS = 1500;
   const GAP = 6;
   const SETS = 3;
 
@@ -819,7 +819,7 @@ function initGallerySlider() {
     });
   }
 
-  function glide(to, ms) {
+  function glide(to, ms, outEase) {
     cancelAnimationFrame(raf);
     const from = x, delta = to - from;
     if (Math.abs(delta) < 0.5) { x = to; apply(); animating = false; normalize(); return; }
@@ -827,8 +827,10 @@ function initGallerySlider() {
     animating = true;
     (function frame(now) {
       const t = Math.min(1, (now - t0) / ms);
-      // 손을 놓는 순간 바로 반응하고 부드럽게 안착 (뷰어와 같은 느낌의 ease-out)
-      const e = 1 - Math.pow(1 - t, 3);
+      // 손을 놓았을 때는 바로 반응하는 ease-out, 자동 흐름일 때는 은은한 ease-in-out
+      const e = outEase
+        ? 1 - Math.pow(1 - t, 3)
+        : (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
       x = from + delta * e;
       apply();
       if (t < 1) raf = requestAnimationFrame(frame);
@@ -836,10 +838,10 @@ function initGallerySlider() {
     })(t0);
   }
 
-  function goTo(i, animate, ms) {
+  function goTo(i, animate, ms, outEase) {
     index = i;
     mark();
-    if (animate) glide(xFor(i), ms || MOVE_MS);
+    if (animate) glide(xFor(i), ms || MOVE_MS, outEase);
     else { cancelAnimationFrame(raf); animating = false; x = xFor(i); apply(); }
   }
 
@@ -897,7 +899,7 @@ function initGallerySlider() {
     if (dx < -th) next = index + Math.min(2, Math.max(1, Math.round(-dx / w)));
     else if (dx > th) next = index - Math.min(2, Math.max(1, Math.round(dx / w)));
 
-    goTo(next, true, flick ? 620 : 780);
+    goTo(next, true, flick ? 620 : 780, true);
     tick();
   }
 
@@ -950,11 +952,7 @@ function initGallerySlider() {
         inView = en.isIntersecting;
         if (inView && firstReveal && !prefersReduced) {
           firstReveal = false;
-          clearTimeout(timer);
-          timer = setTimeout(function () {
-            if (!paused && !dragging && inView && !animating) goTo(index + 1, true);
-            tick();
-          }, 900);   // 첫 사진이 눈에 들어올 잠깐의 여유를 주고 자연스럽게 움직이기 시작합니다
+          tick();   // 일반 주기와 똑같은 리듬으로 시작 — 특수 타이머로 인한 어색한 전환을 없앱니다
         }
       });
     }, { threshold: 0.05 }).observe(view);
@@ -1067,10 +1065,14 @@ function initViewer() {
     realIndex = Math.max(0, Math.min(galleryImages.length - 1, Number(startIndex) || 0));
     virtualIndex = realIndex + 1;
     openedAt = Date.now();
-    viewer.classList.add('is-active');
     viewer.setAttribute('aria-hidden', 'false');
     document.documentElement.classList.add('viewer-open');
-    requestAnimationFrame(() => requestAnimationFrame(() => snap(false)));
+    requestAnimationFrame(() => {
+      snap(false);   // 먼저 정확한 사진 위치로 맞춘 뒤에야 화면에 드러냅니다
+      requestAnimationFrame(() => {
+        viewer.classList.add('is-active');
+      });
+    });
     window.dispatchEvent(new CustomEvent('gallery:viewer'));
   }
 
@@ -1547,7 +1549,7 @@ async function initStoryPost() {
     // 네이버 지도 키는 config.js의 map.naverClientId에서 읽습니다.
     // 이 키가 네이버 클라우드 콘솔에 "배포된 도메인"과 함께 등록되어 있어야
     // 네이버 지도가 뜨고, 인증이 실패하면 자동으로 구글 지도로 대체됩니다.
-    const NAVER_CLIENT_ID = (typeof CONFIG !== 'undefined' && CONFIG.map && CONFIG.map.naverClientId) || '202liu94d4';
+    const NAVER_CLIENT_ID = (typeof CONFIG !== 'undefined' && CONFIG.map && CONFIG.map.naverClientId) || 'awz2yo1ghd';
     const address = CONFIG.wedding.address || CONFIG.wedding.venue;
     let settled = false;
 

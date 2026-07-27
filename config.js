@@ -70,7 +70,7 @@ const CONFIG = {
   // 이 값이 비어 있거나 도메인이 등록되어 있지 않으면 네이버 인증이 실패하고,
   // 그 경우에만 구글 지도가 대신 표시됩니다.
   map: {
-    naverClientId: "202liu94d4",
+    naverClientId: "awz2yo1ghd",
   },
 
   // ── 오시는 길 ──
