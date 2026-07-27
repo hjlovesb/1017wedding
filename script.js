@@ -814,8 +814,15 @@ function initGallerySlider() {
     apply();
     mark();
     void rail.offsetHeight;
+    /* 한 프레임만 기다리면, 브라우저가 "전환 없이 점프한" 상태를 완전히
+       화면에 그려내기 전에 transition이 되살아나 버려서 옛값→새값으로
+       되짚어 애니메이션하는 것처럼 보이는(=순환 지점에서 첫 사진이
+       깜빡이는) 경우가 있었습니다. 프레임을 한 번 더 기다려 점프가
+       확실히 반영된 뒤에만 transition을 복원합니다. */
     requestAnimationFrame(function () {
-      for (let n = 0; n < N; n++) cells[n].style.transition = CELL_TRANS;
+      requestAnimationFrame(function () {
+        for (let n = 0; n < N; n++) cells[n].style.transition = CELL_TRANS;
+      });
     });
   }
 
@@ -1548,7 +1555,7 @@ async function initStoryPost() {
     //    보여서(여러 차례 원인을 찾아 고쳤지만 재발함), 안정성을 위해 우선
     //    구글 지도로 고정합니다. 나중에 네이버 쪽 이슈가 해소되면
     //    FORCE_GOOGLE_MAP을 true로 켜면 네이버를 건너뛰고 구글로 바로 갑니다.
-    const FORCE_GOOGLE_MAP = false;
+    const FORCE_GOOGLE_MAP = true;
 
     // 네이버 지도 키는 config.js의 map.naverClientId에서 읽습니다.
     // 이 키가 네이버 클라우드 콘솔에 "배포된 도메인"과 함께 등록되어 있어야
