@@ -721,12 +721,14 @@ a {
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transform: scale(0.94);
+  transition: opacity 0.38s cubic-bezier(0.22, 0.61, 0.32, 1), transform 0.38s cubic-bezier(0.22, 0.61, 0.32, 1);
 }
 
 .viewer.is-active {
   opacity: 1;
   pointer-events: auto;
+  transform: scale(1);
 }
 
 .viewer__backdrop {
@@ -14161,4 +14163,10 @@ body:not(.intro-active) .invitation {
 }
 .rsvp-modal__date .rsvp-date-num {
   font-family: 'Cormorant Garamond', 'Times New Roman', serif !important;
+}
+.rsvp-modal__date {
+  font-size: clamp(calc(0.7rem - 0.0333rem), 3.4vw, calc(0.9rem - 0.0333rem)) !important;
+}
+.rsvp-modal__date .rsvp-date-num {
+  font-size: clamp(calc(0.7rem + 0.05rem), 3.4vw, calc(0.9rem + 0.05rem)) !important;
 }

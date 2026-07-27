@@ -1538,6 +1538,12 @@ async function initStoryPost() {
     const wrap = document.getElementById('loc-map-wrap');
     if (!wrap) return;
 
+    // ── 네이버 지도 SDK가 이 페이지 환경에서 반복적으로 타일이 깨지는 문제를
+    //    보여서(여러 차례 원인을 찾아 고쳤지만 재발함), 안정성을 위해 우선
+    //    구글 지도로 고정합니다. 나중에 네이버 쪽 이슈가 해소되면
+    //    FORCE_GOOGLE_MAP을 true로 켜면 네이버를 건너뛰고 구글로 바로 갑니다.
+    const FORCE_GOOGLE_MAP = false;
+
     // 네이버 지도 키는 config.js의 map.naverClientId에서 읽습니다.
     // 이 키가 네이버 클라우드 콘솔에 "배포된 도메인"과 함께 등록되어 있어야
     // 네이버 지도가 뜨고, 인증이 실패하면 자동으로 구글 지도로 대체됩니다.
@@ -1616,6 +1622,9 @@ async function initStoryPost() {
         }
         window.addEventListener('resize', refreshMapSize);
         window.addEventListener('orientationchange', refreshMapSize);
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', refreshMapSize);
+        }
       } catch (e) {
         settled = false;
         showGoogleFallback();
@@ -1640,6 +1649,8 @@ async function initStoryPost() {
     // 신규 콘솔(ncpKeyId) → 구 콘솔(ncpClientId) 순서로 시도합니다.
     // 인증 실패는 스크립트 로드 "이후" 비동기로 통보되므로(navermap_authFailure),
     // 콜백 안에서 남은 파라미터로 한 번 더 재시도한 뒤에야 구글 지도로 전환합니다.
+    if (FORCE_GOOGLE_MAP) { showGoogleFallback(); return; }
+
     const paramQueue = ['ncpClientId'];      // ncpKeyId 실패 시 남은 재시도 목록
     let timeout = setTimeout(showGoogleFallback, 4000);
 
