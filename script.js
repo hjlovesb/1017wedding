@@ -1432,7 +1432,21 @@ async function initStoryPost() {
       });
     }
 
-    initMap();
+    (function initMapWhenVisible() {
+      const section = document.getElementById('location');
+      if (!section || !window.IntersectionObserver) { initMap(); return; }
+      const rect = section.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) { setTimeout(initMap, 300); return; }
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            io.disconnect();
+            setTimeout(initMap, 300);
+          }
+        });
+      }, { threshold: 0.01, rootMargin: '200px 0px 200px 0px' });
+      io.observe(section);
+    })();
     initTransport();
     initShareButtons();
   }
@@ -1570,27 +1584,33 @@ async function initStoryPost() {
           anchor: new naver.maps.Point(13, 26),
         };
 
+        // 지도 생성 시점에 컨테이너 크기가 아직 확정되지 않았으면(스크롤 reveal 애니메이션 등)
+        // 네이버 지도가 잘못된 크기로 타일을 계산해버려서 화면이 조각나 보이는 문제가
+        // 있었습니다. 리사이즈를 강제로 알려주되, 지오코딩으로 중심좌표가 바뀌는 시점과
+        // 겹치지 않도록 순서를 맞춥니다(동시에 여러 번 겹쳐 호출하면 오히려 타일이
+        // 서로 다른 시점의 것으로 뒤섞이는 문제가 생길 수 있습니다).
+        let resizeTimer = null;
+        function refreshMapSize() {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(function () {
+            naver.maps.Event.trigger(map, 'resize');
+          }, 80);
+        }
+
         if (naver.maps.Service && address) {
           naver.maps.Service.geocode({ query: address }, function (status, response) {
             if (status !== naver.maps.Service.Status.OK) return;
             const item = response?.v2?.addresses?.[0];
             if (!item) return;
             const point = new naver.maps.LatLng(item.y, item.x);
+            refreshMapSize();
             map.setCenter(point);
             new naver.maps.Marker({ position: point, map, icon: markerIcon });
           });
         } else {
           new naver.maps.Marker({ position: fallbackCenter, map, icon: markerIcon });
         }
-        // 지도 생성 시점에 컨테이너 크기가 아직 확정되지 않았으면(스크롤 reveal 애니메이션 등)
-        // 네이버 지도가 잘못된(보통 더 작은) 크기로 타일을 계산해버려서, 화면에는
-        // 네 귀퉁이만 타일이 채워지고 가운데가 십자 모양으로 텅 비는 버그가 생깁니다.
-        // 컨테이너가 실제 크기로 자리잡을 때마다 지도에 리사이즈를 강제로 알려줍니다.
-        function refreshMapSize() {
-          naver.maps.Event.trigger(map, 'resize');
-          map.autoResize && map.autoResize();
-        }
-        [0, 60, 160, 320, 650, 1200].forEach((ms) => setTimeout(refreshMapSize, ms));
+        setTimeout(refreshMapSize, 400);
         if (window.ResizeObserver) {
           new ResizeObserver(refreshMapSize).observe(wrap);
         }

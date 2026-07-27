@@ -14152,3 +14152,9 @@ body:not(.intro-active) .invitation {
 
 /* ─── 3) 맨하단 버튼 — 흰 테두리를 은은하게 ─────────────────── */
 .fbtn { border: 1px solid rgba(255, 255, 255, 0.16) !important; }
+
+/* ─── 팝업 예식일자 — 사이트 전체와 같은 한글 폰트로 통일 ─────── */
+.rsvp-modal__date,
+.rsvp-modal__summary {
+  font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif !important;
+}
