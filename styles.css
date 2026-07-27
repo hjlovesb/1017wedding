@@ -14045,7 +14045,7 @@ body:not(.intro-active) .invitation {
 .rsvp-input,
 .rsvp-choice-group,
 .rsvp-submit {
-  width: 86% !important;
+  width: 94% !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }

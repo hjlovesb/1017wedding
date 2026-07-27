@@ -1567,6 +1567,11 @@ async function initStoryPost() {
           scaleControl: false,
         });
 
+        const markerIcon = {
+          content: '<div style="width:26px;height:26px;margin:-26px 0 0 -13px;border-radius:50% 50% 50% 0;background:#7a5c46;transform:rotate(-45deg);box-shadow:0 2px 5px rgba(0,0,0,0.35);"></div>',
+          anchor: new naver.maps.Point(13, 26),
+        };
+
         if (naver.maps.Service && address) {
           naver.maps.Service.geocode({ query: address }, function (status, response) {
             if (status !== naver.maps.Service.Status.OK) return;
@@ -1574,10 +1579,10 @@ async function initStoryPost() {
             if (!item) return;
             const point = new naver.maps.LatLng(item.y, item.x);
             map.setCenter(point);
-            new naver.maps.Marker({ position: point, map });
+            new naver.maps.Marker({ position: point, map, icon: markerIcon });
           });
         } else {
-          new naver.maps.Marker({ position: fallbackCenter, map });
+          new naver.maps.Marker({ position: fallbackCenter, map, icon: markerIcon });
         }
       } catch (e) {
         settled = false;
