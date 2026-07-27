@@ -50,6 +50,7 @@ html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -847,7 +848,7 @@ a {
 
 .anim-target.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 .gallery__item {
   opacity: 0;
@@ -9679,7 +9680,7 @@ body { margin: 0 auto; }
 }
 .anim-target.is-visible, .gallery__item.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 /* Smaller, centered, transparent luxury countdown. */
@@ -14157,4 +14158,7 @@ body:not(.intro-active) .invitation {
 .rsvp-modal__date,
 .rsvp-modal__summary {
   font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif !important;
+}
+.rsvp-modal__date .rsvp-date-num {
+  font-family: 'Cormorant Garamond', 'Times New Roman', serif !important;
 }
