@@ -721,13 +721,21 @@ a {
   overflow: hidden;
   opacity: 0;
   pointer-events: none;
-  transform: scale(0.94);
-  transition: opacity 0.38s cubic-bezier(0.22, 0.61, 0.32, 1), transform 0.38s cubic-bezier(0.22, 0.61, 0.32, 1);
+  transition: opacity 0.44s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .viewer.is-active {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* 사진 자체가 부드럽게 확대되며 나타남 (오버레이는 그대로 페이드만) */
+.viewer__slide img {
+  transform: scale(0.9);
+  transition: transform 0.56s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.viewer.is-active .viewer__slide img {
   transform: scale(1);
 }
 
@@ -12673,18 +12681,18 @@ body .section .section__title::after { content: none !important; display: none !
   background: #eeeae2 !important;
 }
 
-/* 지도 내부 요소에 전역 규칙이 끼어들지 않게만 막습니다 */
+/* 지도 내부 요소에 전역 규칙이 끼어들지 않게만 막습니다.
+   (주의: width/height를 auto로 강제하거나 box-sizing을 content-box로
+   바꾸면 네이버 지도 SDK가 내부적으로 계산하는 타일 픽셀 크기가 틀어져서
+   지도가 4조각으로 갈라지고 가운데에 십자가 모양의 빈 공간이 생기는
+   원인이 되므로 절대 다시 추가하지 말 것 — 실제로 이게 원인이었음) */
 .location__map-wrap img,
 .location__map-wrap svg {
   max-width: none !important;
-  max-height: none !important;
-  width: auto;
-  height: auto;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
 
-.location__map-wrap * { box-sizing: content-box; }
 .loc-map-frame { height: 280px !important; }
 
 /* ─── 5) 소제목 · 본문 글자 확대 + 진하게 ─────────────────── */
@@ -14165,8 +14173,8 @@ body:not(.intro-active) .invitation {
   font-family: 'Cormorant Garamond', 'Times New Roman', serif !important;
 }
 .rsvp-modal__date {
-  font-size: clamp(calc(0.7rem - 0.025rem), 3.4vw, calc(0.9rem - 0.025rem)) !important;
+  font-size: clamp(calc(0.7rem - 0.0209rem), 3.4vw, calc(0.9rem - 0.0209rem)) !important;
 }
 .rsvp-modal__date .rsvp-date-num {
-  font-size: clamp(calc(0.7rem + 0.0333rem), 3.4vw, calc(0.9rem + 0.0333rem)) !important;
+  font-size: clamp(calc(0.7rem + 0.0292rem), 3.4vw, calc(0.9rem + 0.0292rem)) !important;
 }

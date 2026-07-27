@@ -1570,8 +1570,36 @@ async function initStoryPost() {
       wrap.appendChild(iframe);
     }
 
+    // 컨테이너 크기가 "완전히 안정된" 뒤에만 콜백을 실행합니다. 스크롤 reveal
+    // 애니메이션 도중이거나 아직 레이아웃이 확정되지 않은 상태(0×0 또는
+    // 계속 바뀌는 크기)에서 네이버 지도를 생성하면, 지도가 잘못된 크기로
+    // 타일을 계산해버려 화면이 4조각으로 갈라지고 가운데에 십자가 모양의
+    // 빈 공간이 남는 문제가 있었습니다. resize 이벤트로 사후 보정하는 대신,
+    // 처음부터 올바른 최종 크기에서 지도를 만드는 쪽이 더 확실합니다.
+    function whenSizeStable(el, cb) {
+      let stableFrames = 0;
+      let lastW = -1, lastH = -1;
+      let tries = 0;
+      (function check() {
+        const w = el.clientWidth, h = el.clientHeight;
+        if (w > 0 && h > 0 && w === lastW && h === lastH) {
+          stableFrames++;
+        } else {
+          stableFrames = 0;
+        }
+        lastW = w; lastH = h;
+        tries++;
+        // 3프레임 연속 같은 크기면 안정된 것으로 판단. 혹시라도 계속
+        // 불안정하면(드문 경우) 60프레임(약 1초) 후엔 그냥 진행합니다.
+        if (stableFrames >= 3 || tries > 60) { cb(); return; }
+        requestAnimationFrame(check);
+      })();
+    }
+
     function renderNaverMap() {
       if (settled || !window.naver || !window.naver.maps) { showGoogleFallback(); return; }
+      whenSizeStable(wrap, function () {
+      if (settled) return;
       try {
         settled = true;
         wrap.innerHTML = '';
@@ -1592,17 +1620,18 @@ async function initStoryPost() {
           anchor: new naver.maps.Point(13, 26),
         };
 
-        // 지도 생성 시점에 컨테이너 크기가 아직 확정되지 않았으면(스크롤 reveal 애니메이션 등)
-        // 네이버 지도가 잘못된 크기로 타일을 계산해버려서 화면이 조각나 보이는 문제가
-        // 있었습니다. 리사이즈를 강제로 알려주되, 지오코딩으로 중심좌표가 바뀌는 시점과
-        // 겹치지 않도록 순서를 맞춥니다(동시에 여러 번 겹쳐 호출하면 오히려 타일이
-        // 서로 다른 시점의 것으로 뒤섞이는 문제가 생길 수 있습니다).
+        // 지도를 만든 "이후"에도 컨테이너 크기가 바뀌는 경우(예: 폰트 로딩,
+        // 세로/가로 회전)에 대비해 resize를 한 번 더 알려줍니다. 다만 여러
+        // 트리거가 동시에 겹쳐 타일이 뒤섞이는 걸 막기 위해 ResizeObserver
+        // 하나로만 감지하고(윈도우 resize/orientationchange/visualViewport는
+        // 결국 이 컨테이너의 크기 변화로 이어지므로 중복 리스너가 불필요),
+        // 하나의 타이머로만 디바운스합니다.
         let resizeTimer = null;
         function refreshMapSize() {
           clearTimeout(resizeTimer);
           resizeTimer = setTimeout(function () {
             naver.maps.Event.trigger(map, 'resize');
-          }, 80);
+          }, 120);
         }
 
         if (naver.maps.Service && address) {
@@ -1618,19 +1647,14 @@ async function initStoryPost() {
         } else {
           new naver.maps.Marker({ position: fallbackCenter, map, icon: markerIcon });
         }
-        setTimeout(refreshMapSize, 400);
         if (window.ResizeObserver) {
           new ResizeObserver(refreshMapSize).observe(wrap);
-        }
-        window.addEventListener('resize', refreshMapSize);
-        window.addEventListener('orientationchange', refreshMapSize);
-        if (window.visualViewport) {
-          window.visualViewport.addEventListener('resize', refreshMapSize);
         }
       } catch (e) {
         settled = false;
         showGoogleFallback();
       }
+      });
     }
 
     function loadNaverScript(param) {
