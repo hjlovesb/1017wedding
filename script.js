@@ -865,7 +865,10 @@ function initGallerySlider() {
     sx = px; sy = py; lastX = px; lastDx = 0;
     startX = x;
     clearTimeout(timer);
-    mark();   // 터치를 시작하는 순간 확대 착시를 없애고 평평한 슬라이드로
+    /* 여기서 곧바로 평평하게 만들지 않습니다. 단순히 사진을 눌러서
+       확대(라이트박스)를 열려는 탭까지도 이 시점에 착시가 풀려버리면
+       "누르자마자 옆 사진이 커진다"는 조잡한 깜빡임으로 보입니다.
+       실제로 가로 드래그라고 확정된 순간에만(drag() 안에서) 평평하게 만듭니다. */
   }
 
   function drag(px, py, ev) {
@@ -876,6 +879,7 @@ function initGallerySlider() {
       horizontal = Math.abs(dx) >= Math.abs(dy) * 0.8;
       decided = true;
       if (!horizontal) { dragging = false; tick(); return; }
+      mark();   // 실제 가로 드래그가 시작된 순간에만 확대 착시를 없애고 평평한 슬라이드로
     }
     if (Math.abs(dx) > 3) moved = true;
     if (ev && ev.cancelable) ev.preventDefault();
@@ -1604,6 +1608,37 @@ async function initStoryPost() {
         settled = true;
         wrap.innerHTML = '';
         const naver = window.naver;
+
+        // 네이버 지도 타일도 결국 <img>로 그려지는데, 느린 연결(모바일 데이터,
+        // 카카오톡 인앱 브라우저 등)에서는 브라우저가 자체적으로 "이미지 지연
+        // 로딩" 개입(콘솔에 [Intervention] Images loaded lazily... 로 표시됨)을
+        // 걸어 일부 타일을 자리표시자(빈 화면)로 바꿔버립니다. 이게 지도가
+        // 조각나 보이고 가운데 십자가 모양 빈 공간이 남는 진짜 원인 중 하나로
+        // 보입니다. 지도 컨테이너에 새로 들어오는 <img>마다 즉시 "지연로딩 아님"
+        // 으로 표시해서 이 개입 대상에서 제외시킵니다.
+        if (window.MutationObserver) {
+          const forceEager = function (node) {
+            if (!node || node.nodeType !== 1) return;
+            if (node.tagName === 'IMG') {
+              node.loading = 'eager';
+              node.decoding = 'sync';
+              try { node.setAttribute('fetchpriority', 'high'); } catch (e) {}
+            }
+            if (node.querySelectorAll) {
+              node.querySelectorAll('img').forEach(function (img) {
+                img.loading = 'eager';
+                img.decoding = 'sync';
+                try { img.setAttribute('fetchpriority', 'high'); } catch (e) {}
+              });
+            }
+          };
+          new MutationObserver(function (mutations) {
+            mutations.forEach(function (m) {
+              m.addedNodes && m.addedNodes.forEach(forceEager);
+            });
+          }).observe(wrap, { childList: true, subtree: true });
+        }
+
         // 아산 시청 인근 대략 좌표로 우선 중심을 잡고, 지오코딩 성공 시 정확한 위치로 이동합니다.
         const fallbackCenter = new naver.maps.LatLng(36.7898, 127.0044);
         const map = new naver.maps.Map(wrap, {
