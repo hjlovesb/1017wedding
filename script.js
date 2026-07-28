@@ -1670,8 +1670,8 @@ async function initStoryPost() {
         });
 
         const markerIcon = {
-          content: '<div style="width:26px;height:26px;margin:-26px 0 0 -13px;border-radius:50% 50% 50% 0;background:#7a5c46;transform:rotate(-45deg);box-shadow:0 2px 5px rgba(0,0,0,0.35);"></div>',
-          anchor: new naver.maps.Point(13, 26),
+          content: '<div class="map-sparkle-marker"><span class="map-sparkle-marker__ring"></span><span class="map-sparkle-marker__ring map-sparkle-marker__ring--delay"></span><span class="map-sparkle-marker__core"></span></div>',
+          anchor: new naver.maps.Point(11, 11),
         };
 
         // 지도를 만든 "이후"에도 컨테이너 크기가 바뀌는 경우(예: 폰트 로딩,
