@@ -2114,7 +2114,13 @@ body,
   box-shadow: 0 10px 28px rgba(40, 34, 31, 0.045) !important;
 }
 
-.location__map-wrap img,
+/* #loc-map-img는 예전 "정적 이미지로 지도 보여주기" 시절 요소로 지금은
+   HTML/JS 어디에도 없는 죽은 선택자입니다. 예전엔 이게 .location__map-wrap img와
+   함께 묶여 있어서, 네이버 지도 타일 <img> 하나하나까지 "부모의 100% 너비로
+   늘려라(width:100% !important; height:auto !important)"를 강제로 적용받고
+   있었습니다. 타일마다 부모 div 크기가 다 다르니 이게 타일이 늘어나거나
+   깨진 이미지처럼 보이고, 가운데가 십자가 모양으로 비어 보이는 진짜 원인이었습니다.
+   지도 타일에는 절대 이 규칙을 다시 걸지 말 것 — #loc-map-img만 남겨둡니다. */
 #loc-map-img {
   display: block !important;
   width: 100% !important;
