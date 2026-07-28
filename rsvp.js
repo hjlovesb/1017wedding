@@ -10,7 +10,6 @@
     const modal = document.getElementById('attendModal');
     if (!modal) return;
 
-    const closeBtn = document.getElementById('rsvp-close');
     const form = document.getElementById('rsvp-form');
     const message = document.getElementById('rsvp-message');
     const attendRadio = document.getElementById('rsvp-attend');
@@ -23,16 +22,33 @@
     const hideToday = document.getElementById('rsvp-hide-today');
     const nameInput = document.getElementById('rsvp-name');
 
-    const STORAGE_KEY = 'wedding_rsvp_hide_date';
+    // 한 번이라도 참석/불참을 "전달하기"로 제출한 사람에게는 영구히 다시 뜨지 않고,
+    // 제출하지 않고 닫은 경우엔 "오늘 하루 보지 않기"를 체크했을 때만 오늘 하루 숨깁니다.
+    const SUBMITTED_KEY = 'wedding_rsvp_submitted';
+    const HIDE_TODAY_KEY = 'wedding_rsvp_hide_date';
 
     function todayStamp() {
       const d = new Date();
       return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
     }
 
-    function shouldHideToday() {
+    function hasSubmitted() {
       try {
-        return localStorage.getItem(STORAGE_KEY) === todayStamp();
+        return localStorage.getItem(SUBMITTED_KEY) === '1';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function markSubmitted() {
+      try {
+        localStorage.setItem(SUBMITTED_KEY, '1');
+      } catch (e) {}
+    }
+
+    function isHiddenToday() {
+      try {
+        return localStorage.getItem(HIDE_TODAY_KEY) === todayStamp();
       } catch (e) {
         return false;
       }
@@ -41,7 +57,7 @@
     function storeHideToday() {
       if (!hideToday || !hideToday.checked) return;
       try {
-        localStorage.setItem(STORAGE_KEY, todayStamp());
+        localStorage.setItem(HIDE_TODAY_KEY, todayStamp());
       } catch (e) {}
     }
 
@@ -79,7 +95,7 @@
     }
 
     window.openAttendModal = function () {
-      if (shouldHideToday()) return false;
+      if (hasSubmitted() || isHiddenToday()) return false;
       modal.classList.add('show');
       modal.setAttribute('aria-hidden', 'false');
       if (hideToday) hideToday.checked = false;   // 새로고침 시 체크 상태가 남지 않도록
@@ -96,7 +112,6 @@
       window.dispatchEvent(new CustomEvent('rsvp:closed'));
     }
 
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
     modal.querySelectorAll('[data-rsvp-close]').forEach((el) => {
       el.addEventListener('click', closeModal);
     });
@@ -127,6 +142,9 @@
             : `${name}님의 불참 의사가 확인되었습니다.`;
           message.classList.add('is-success');
         }
+        markSubmitted();
+        // 전달 완료 후 곧바로 팝업을 닫습니다(사용자가 완료 메시지를 잠깐 볼 수 있도록 살짝 지연).
+        setTimeout(closeModal, 700);
       });
     }
 

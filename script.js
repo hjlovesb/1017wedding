@@ -787,10 +787,14 @@ function initGallerySlider() {
 
   function apply() { rail.style.transform = 'translate3d(' + x + 'px, 0, 0)'; }
 
-  function mark() {
+  function mark(instant) {
     for (let n = 0; n < N; n++) {
       const on = n === index;
-      cells[n].style.transition = dragging ? 'opacity 1.25s ease, filter 1.25s ease' : CELL_TRANS;
+      /* instant가 true면(순환 지점 점프 중) transition을 절대 켜지 않습니다.
+         예전엔 이 함수가 무조건 CELL_TRANS를 다시 켜버려서, normalize()가
+         꺼둔 transition:none을 곧바로 무효화시키는 바람에 점프가 실제로는
+         애니메이션과 함께 일어나 첫 사진이 깜빡이는 진짜 원인이었습니다. */
+      cells[n].style.transition = instant ? 'none' : (dragging ? 'opacity 1.25s ease, filter 1.25s ease' : CELL_TRANS);
       cells[n].style.transform = dragging ? 'scale(1)' : (on ? 'scale(1.045)' : 'scale(0.955)');
       cells[n].style.opacity = on ? '1' : '0.55';
       cells[n].style.zIndex = on ? '2' : '1';
@@ -812,7 +816,7 @@ function initGallerySlider() {
         겹쳐 첫 장에서 깜빡이는 것처럼 보입니다.) */
     for (let n = 0; n < N; n++) cells[n].style.transition = 'none';
     apply();
-    mark();
+    mark(true);   // instant: 점프 도중엔 transition을 절대 켜지 않습니다
     void rail.offsetHeight;
     /* 한 프레임만 기다리면, 브라우저가 "전환 없이 점프한" 상태를 완전히
        화면에 그려내기 전에 transition이 되살아나 버려서 옛값→새값으로
@@ -1570,15 +1574,23 @@ async function initStoryPost() {
     function showGoogleFallback() {
       if (settled) return;
       settled = true;
-      wrap.innerHTML = '';
-      const query = encodeURIComponent(CONFIG.wedding.venue || CONFIG.wedding.address);
-      const iframe = document.createElement('iframe');
-      iframe.className = 'loc-map-frame';
-      iframe.setAttribute('title', '나비스퀘어 지도');
-      iframe.setAttribute('loading', 'lazy');
-      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-      iframe.src = `https://maps.google.com/maps?q=${query}&z=16&hl=ko&output=embed`;
-      wrap.appendChild(iframe);
+      /* 구글 지도는 iframe이 한 번 로드되면, 이후에 컨테이너 크기가 CSS로
+         바뀌어도 내부 지도가 다시 그려지지 않습니다. 그래서 스크롤 reveal
+         애니메이션 도중처럼 컨테이너 크기가 아직 확정되지 않은 시점에
+         iframe이 먼저 로드돼버리면, 그 잘못된(작은/과도기) 크기로 지도가
+         굳어버려서 화면이 어긋나 보이는 문제가 있었습니다. 네이버 지도와
+         마찬가지로 크기가 완전히 안정된 뒤에만 iframe을 만듭니다. */
+      whenSizeStable(wrap, function () {
+        wrap.innerHTML = '';
+        const query = encodeURIComponent(CONFIG.wedding.venue || CONFIG.wedding.address);
+        const iframe = document.createElement('iframe');
+        iframe.className = 'loc-map-frame';
+        iframe.setAttribute('title', '나비스퀘어 지도');
+        iframe.setAttribute('loading', 'eager');
+        iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        iframe.src = `https://maps.google.com/maps?q=${query}&z=16&hl=ko&output=embed`;
+        wrap.appendChild(iframe);
+      });
     }
 
     // 컨테이너 크기가 "완전히 안정된" 뒤에만 콜백을 실행합니다. 스크롤 reveal
@@ -2233,7 +2245,7 @@ async function initStoryPost() {
   function createSparkles() {
     layer.innerHTML = "";
 
-    const count = window.innerWidth < 420 ? 62 : 72;
+    const count = 60;
 
     for (let i = 0; i < count; i++) {
       const el = document.createElement("span");
@@ -2246,23 +2258,23 @@ async function initStoryPost() {
       let size, opacity, fall, twinkle, sway;
 
       if (depth > 0.75) {
-  size = rand(6, 8.6);
-  opacity = rand(0.58, 0.78);
-  fall = rand(9, 13);
-  twinkle = rand(1.9, 2.9);
-  sway = rand(-26, 26);
+  size = rand(5, 7.2);
+  opacity = rand(0.46, 0.64);
+  fall = rand(11, 16);
+  twinkle = rand(2.2, 3.3);
+  sway = rand(-20, 20);
 } else if (depth > 0.38) {
-  size = rand(4.4, 6.2);
-  opacity = rand(0.4, 0.58);
-  fall = rand(12, 17);
-  twinkle = rand(2.4, 3.7);
-  sway = rand(-22, 22);
-} else {
-  size = rand(3, 4.3);
-  opacity = rand(0.26, 0.38);
+  size = rand(3.8, 5.4);
+  opacity = rand(0.30, 0.46);
   fall = rand(15, 21);
-  twinkle = rand(3.1, 4.5);
-  sway = rand(-18, 18);
+  twinkle = rand(2.8, 4.2);
+  sway = rand(-17, 17);
+} else {
+  size = rand(2.4, 3.6);
+  opacity = rand(0.18, 0.28);
+  fall = rand(18, 25);
+  twinkle = rand(3.6, 5.2);
+  sway = rand(-14, 14);
 }
 
       const color = pick(tones);
