@@ -967,7 +967,15 @@ function initGallerySlider() {
         inView = en.isIntersecting;
         if (inView && firstReveal && !prefersReduced) {
           firstReveal = false;
-          tick();   // 일반 주기와 똑같은 리듬으로 시작 — 특수 타이머로 인한 어색한 전환을 없앱니다
+          // 첫 장에 가만히 멈춰있다가 뒤늦게 출발하는 대신, "마지막 장에서
+          // 첫 장으로 넘어오는" 움직임으로 시작합니다. index는 이미 첫 장
+          // (one)으로 맞춰져 있으므로, 위치만 바로 앞(마지막 장 자리)으로
+          // 순간 이동시킨 뒤 첫 장 자리로 미끄러져 들어오게 합니다.
+          const lastIdx = index - 1;
+          x = xFor(lastIdx);
+          apply();
+          glide(xFor(index), MOVE_MS, false);
+          tick();   // 이후엔 평소와 같은 자동재생 리듬으로 이어집니다
         }
       });
     }, { threshold: 0.05 }).observe(view);
@@ -1402,9 +1410,19 @@ async function initStoryPost() {
     const naver = $('#btn-naver-map');
     const tmap = $('#btn-tmap');
 
-    if (kakao) kakao.href = w.mapLinks.kakao;
-    if (naver) naver.href = w.mapLinks.naver;
-    if (tmap) tmap.href = w.mapLinks.tmap;
+    // 네이버지도/카카오맵/티맵처럼 외부 지도 앱으로 나가는 버튼은, 일부
+    // 인앱 브라우저(카카오톡 등)에서 target="_blank"가 새 탭이 아니라
+    // "같은 탭에서 이동"으로 처리되는 경우가 있습니다. 그러면 그 앱이나
+    // 사이트에서 뒤로가기를 눌러도 원래 페이지가 복구되지 않고 빈 화면만
+    // 남는 심각한 문제가 생깁니다. window.open()을 명시적으로 호출해서
+    // 확실하게 "현재 페이지는 그대로 두고" 새 창/탭으로 열도록 합니다.
+    function openExternalMap(url) {
+      if (!url) return;
+      const win = window.open(url, '_blank', 'noopener');
+      if (!win) window.location.href = url;   // 팝업이 막힌 극히 드문 경우에만 최후 수단
+    }
+    if (kakao) kakao.addEventListener('click', (e) => { e.preventDefault(); openExternalMap(kakao.href); });
+    if (naver) naver.addEventListener('click', (e) => { e.preventDefault(); openExternalMap(naver.href); });
 
     if (tmap) {
       const defaultTmapUrl = `tmap://search?name=${encodeURIComponent(w.venue || w.address)}`;
@@ -1431,11 +1449,19 @@ async function initStoryPost() {
         window.addEventListener('pagehide', clearFallback);
         document.addEventListener('visibilitychange', onVisibilityChange);
 
-        window.location.href = tmapUrl;
+        // 현재 페이지 자체를 tmap:// 로 이동시키지 않습니다. 앱이 없거나
+        // 스킴을 못 처리하면 현재 탭이 빈 화면으로 남고 뒤로가기로도
+        // 복구가 안 되는 게 진짜 원인이었습니다 — 숨김 iframe으로만
+        // 시도해서 현재 페이지는 절대 이동하지 않게 합니다.
+        const tryFrame = document.createElement('iframe');
+        tryFrame.style.display = 'none';
+        tryFrame.src = tmapUrl;
+        document.body.appendChild(tryFrame);
+        setTimeout(() => tryFrame.remove(), 1500);
 
         fallbackTimer = setTimeout(() => {
           if (!document.hidden) {
-            window.location.href = fallbackUrl;
+            openExternalMap(fallbackUrl);   // 폴백도 같은 탭 이동이 아니라 새 탭으로
           }
           clearFallback();
         }, 1200);
