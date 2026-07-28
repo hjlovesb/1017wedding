@@ -48,7 +48,7 @@ const CONFIG = {
     tel: "0507-1422-1183",
     mapLinks: {
       kakao: "https://map.kakao.com/link/map/%EB%82%98%EB%B9%84%EC%8A%A4%ED%80%98%EC%96%B4,36.7866907,127.0312252",
-      naver: "https://map.naver.com/p/search/%EB%82%98%EB%B9%84%EC%8A%A4%ED%80%98%EC%96%B4",
+      naver: "https://map.naver.com/?lng=127.0312252&lat=36.7866907&title=%EB%82%98%EB%B9%84%EC%8A%A4%ED%80%98%EC%96%B4",
       tmap: "tmap://route?goalname=%EB%82%98%EB%B9%84%EC%8A%A4%ED%80%98%EC%96%B4&goalx=127.0312252&goaly=36.7866907",
       tmapFallback: "https://apps.apple.com/kr/app/%ED%8B%B0%EB%A7%B5-%EC%9E%A5%EC%86%8C%EC%B6%94%EC%B2%9C-%EC%A7%80%EB%8F%84-%EC%9A%B4%EC%A0%84%EC%A0%90%EC%88%98-%EB%8C%80%EC%A4%91%EA%B5%90%ED%86%B5-%EB%8C%80%EB%A6%AC/id431589174"
     },
