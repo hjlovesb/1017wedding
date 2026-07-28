@@ -1559,7 +1559,7 @@ async function initStoryPost() {
     //    보여서(여러 차례 원인을 찾아 고쳤지만 재발함), 안정성을 위해 우선
     //    구글 지도로 고정합니다. 나중에 네이버 쪽 이슈가 해소되면
     //    FORCE_GOOGLE_MAP을 true로 켜면 네이버를 건너뛰고 구글로 바로 갑니다.
-    const FORCE_GOOGLE_MAP = true;
+    const FORCE_GOOGLE_MAP = false;
 
     // 네이버 지도 키는 config.js의 map.naverClientId에서 읽습니다.
     // 이 키가 네이버 클라우드 콘솔에 "배포된 도메인"과 함께 등록되어 있어야
