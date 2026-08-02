@@ -121,13 +121,14 @@ const CONFIG = {
     ],
     bride: [
       { role: "신부", name: "박상빈", bank: "하나은행", number: "671-910155-93307" },
+      { role: "아버지", name: "박경순", bank: "농협은행", number: "475121-52-004485" },
     ],
   },
 
   // ── 링크 공유 시 나타나는 문구 ──
   kakaoShare: {
     // Kakao Developers 앱키 (JavaScript 키)
-    appKey: "",
+    appKey: "d0b13d877bfc9579c9a77017da2869e5",
     title: "이현준 ♥ 박상빈 결혼합니다",
     description: "2026. 10. 17 (Sat) PM 4:20\n나비스퀘어 나비홀",
   },

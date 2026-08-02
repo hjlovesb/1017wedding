@@ -40,7 +40,7 @@
     return paths[0];
   }
 
-  const HERO_IMAGE_CANDIDATES = ['images/hero/1.jpg'];
+  const HERO_IMAGE_CANDIDATES = ['images/hero/general-hero-20260802.jpg'];
   let heroImagePromise = null;
 
   function primeHeroImage() {
@@ -1492,7 +1492,7 @@ async function initStoryPost() {
             content: {
               title: shareData.title,
               description: shareData.text,
-              imageUrl: new URL('images/og/1.jpg', window.location.href).href,
+              imageUrl: new URL('images/og/general-link-20260802.jpg', window.location.href).href,
               link: { mobileWebUrl: shareData.url, webUrl: shareData.url }
             },
             buttons: [{

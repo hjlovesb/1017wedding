@@ -14226,3 +14226,57 @@ body:not(.intro-active) .invitation {
 .rsvp-modal__date .rsvp-date-num {
   font-size: clamp(calc(0.7rem + 0.0292rem), 3.4vw, calc(0.9rem + 0.0292rem)) !important;
 }
+
+
+/* =========================================================
+   GENERAL FINAL PATCH 2026-08-02
+   ========================================================= */
+/* 인트로 봉투 주변의 불필요한 분홍 원형/그라데이션 장식 완전 제거 */
+#curtain .curtain__content::before,
+#curtain .curtain__content::after,
+#curtain .curtain__frame::before,
+#curtain .curtain__frame::after,
+#curtain::before,
+#curtain::after {
+  content: none !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* 계좌 정보는 모바일에서도 한 줄 유지 */
+.account-item,
+.account-item__info,
+.account-item__detail,
+.account-item__role,
+.account-item__name {
+  min-width: 0 !important;
+}
+.account-item__detail {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  font-size: clamp(0.67rem, 3.15vw, 0.85rem) !important;
+  letter-spacing: -0.025em !important;
+}
+.account-item__name {
+  white-space: nowrap !important;
+  flex: 0 0 auto !important;
+}
+.account-item__copy {
+  flex: 0 0 auto !important;
+  margin-left: 8px !important;
+}
+@media (max-width: 360px) {
+  .account-item { padding-left: 12px !important; padding-right: 12px !important; }
+  .account-item__detail { font-size: 0.64rem !important; gap: 3px !important; }
+  .account-item__copy { padding-left: 10px !important; padding-right: 10px !important; margin-left: 5px !important; }
+}
