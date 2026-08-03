@@ -1499,7 +1499,7 @@ async function initStoryPost() {
             content: {
               title: shareData.title,
               description: shareData.text,
-              imageUrl: new URL('images/og/general-link-exact-senior-layout.jpg', window.location.href).href,
+              imageUrl: new URL('images/og/general-link-exact-senior-layout.jpg?v=20260803v1', window.location.href).href,
               link: { mobileWebUrl: shareData.url, webUrl: shareData.url }
             },
             buttons: [{
