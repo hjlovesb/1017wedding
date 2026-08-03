@@ -14625,19 +14625,32 @@ body:not(.intro-active) .invitation {
   font-size: clamp(0.8rem, 3.4vw, 0.91rem) !important;
 }
 
-/* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 이전에 왼쪽 정렬로
-   맞춰뒀던 규칙이 있어서 너무 왼쪽으로 치우쳐 보였음. 가운데 정렬로 되돌림 */
+/* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 시니어판과 동일한
+   폰트크기/정렬/간격으로 통일 */
 .card__yr {
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
+  bottom: 23.5% !important;
+  gap: 0 !important;
   align-items: center !important;
   text-align: center !important;
 }
 .card__yr i,
 .card__yr b {
+  font-size: 1.95rem !important;
+  font-weight: 300 !important;
+  transform: scaleX(0.68) !important;
   transform-origin: center center !important;
   align-self: center !important;
   margin-left: auto !important;
   margin-right: auto !important;
+  letter-spacing: normal !important;
+  text-indent: 0 !important;
+}
+.card__yr i {
+  font-size: 2.3rem !important;
+}
+.card__yr b {
+  margin-top: -4px !important;
 }
