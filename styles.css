@@ -14654,3 +14654,10 @@ body:not(.intro-active) .invitation {
 .card__yr b {
   margin-top: -4px !important;
 }
+
+/* 갤러리 확대사진 뷰어 배경 — 반투명해서 뒤에 다른 요소(영문 글자,
+   자동재생 사진)가 비치던 문제. 완전 불투명하게 조정 */
+.viewer__backdrop {
+  background: #000 !important;
+  opacity: 1 !important;
+}
