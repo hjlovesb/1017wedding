@@ -14470,8 +14470,8 @@ body:not(.intro-active) .invitation {
    GENERAL PATCH 2026-08-03 — RSVP POPUP MICRO SIZE + 3 LINES ONLY
    ========================================================= */
 .rsvp-modal__panel {
-  width: min(316px, calc(100vw - 28px)) !important;
-  max-width: 316px !important;
+  width: min(272px, calc(100vw - 28px)) !important;
+  max-width: 272px !important;
 }
 .rsvp-card {
   padding-left: 9% !important;
@@ -14629,33 +14629,33 @@ body:not(.intro-active) .invitation {
    보장하기 위해 폭을 100%로 채우고 text-align만으로 정렬, 크기도 키움 */
 .card__yr {
   position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  bottom: 30% !important;
+  left: 6% !important;
+  right: 6% !important;
+  width: auto !important;
+  bottom: 25% !important;
   gap: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: center !important;
-  text-align: center !important;
+  text-align: left !important;
 }
 .card__yr i,
 .card__yr b {
   display: block !important;
   width: 100% !important;
-  font-size: 2.75rem !important;
+  font-size: 2.35rem !important;
   font-weight: 300 !important;
   transform: scaleX(0.68) !important;
-  transform-origin: center center !important;
-  text-align: center !important;
-  margin-left: auto !important;
+  transform-origin: left center !important;
+  text-align: left !important;
+  margin-left: 0 !important;
   margin-right: auto !important;
   letter-spacing: normal !important;
   text-indent: 0 !important;
 }
 .card__yr i {
-  font-size: 3.2rem !important;
+  font-size: 2.8rem !important;
 }
 .card__yr b {
   margin-top: -4px !important;
@@ -14679,9 +14679,5 @@ body:has(.viewer.is-active) {
 }
 
 /* 옆 카드가 살짝 삐져나와 테두리처럼 보이는 문제 — 스테이지 바깥으로
-   넘치는 부분을 확실히 잘라내되, 반짝임 효과가 잘리지 않도록 충분한
-   여백을 확보 */
-.cards__stage {
-  overflow: hidden !important;
-  padding: 50px !important;
-}
+   /* 옆 카드가 살짝 삐져나와 보이는 문제를 overflow:hidden으로 해결하려
+   했으나 반짝임 효과까지 같이 사라져서 되돌림(반짝임 효과가 우선) */
