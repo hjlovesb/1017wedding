@@ -1335,10 +1335,17 @@ async function initStoryPost() {
     });
     dots.forEach(function (dot, i2) { dot.classList.toggle('is-on', i2 === cur); });
     if (hint) {
-      if (cards[cur].getAttribute('data-flip') === '0') hint.textContent = '';
-      else hint.textContent = cards[cur].classList.contains('is-flipped')
-        ? '옆으로 넘겨 보세요'
-        : '엽서를 눌러 뒤집어 보세요';
+      const isFlippedCard = cards[cur].classList.contains('is-flipped');
+      if (cards[cur].getAttribute('data-flip') === '0') {
+        hint.innerHTML = '';
+        hint.classList.remove('cards__hint--slide');
+      } else if (isFlippedCard) {
+        hint.innerHTML = '옆으로 넘겨 보세요';
+        hint.classList.add('cards__hint--slide');
+      } else {
+        hint.innerHTML = '뒷면을 누르세요';
+        hint.classList.remove('cards__hint--slide');
+      }
     }
   }
 
@@ -1492,7 +1499,7 @@ async function initStoryPost() {
             content: {
               title: shareData.title,
               description: shareData.text,
-              imageUrl: new URL('images/og/general-link-senior-size-941x1060.jpg', window.location.href).href,
+              imageUrl: new URL('images/og/general-link-exact-senior-layout.jpg', window.location.href).href,
               link: { mobileWebUrl: shareData.url, webUrl: shareData.url }
             },
             buttons: [{

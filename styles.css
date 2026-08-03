@@ -13742,7 +13742,7 @@ body { overflow-x: hidden; }
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
-  animation: silverFlow 14s ease-in-out infinite !important;
+  animation: silverFlow 2.5s cubic-bezier(0.22, 0.61, 0.36, 1) infinite !important;
 }
 
 .card__yr i,
@@ -13824,7 +13824,7 @@ body { overflow-x: hidden; }
   background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   color: transparent !important;
-  animation: silverFlow 14s ease-in-out infinite !important;
+  animation: silverFlow 2.5s cubic-bezier(0.22, 0.61, 0.36, 1) infinite !important;
 }
 
 /* 흐름이 서로 살짝 어긋나 더 자연스럽게 */
@@ -14279,4 +14279,365 @@ body:not(.intro-active) .invitation {
   .account-item { padding-left: 12px !important; padding-right: 12px !important; }
   .account-item__detail { font-size: 0.64rem !important; gap: 3px !important; }
   .account-item__copy { padding-left: 10px !important; padding-right: 10px !important; margin-left: 5px !important; }
+}
+
+/* =========================================================
+   GENERAL PATCH 2026-08-02 — OUR STORY 2026 SILVER TEXT
+   Senior edition과 동일한 화면상 위치/크기만 일반용에 이식
+   ========================================================= */
+.card__yr {
+  bottom: 23.5% !important;
+  gap: 0 !important;
+}
+.card__yr i,
+.card__yr b {
+  font-size: clamp(34.65px, 7.8vw, 49.35px) !important;
+  font-weight: 300 !important;
+  transform: scaleX(0.68) !important;
+}
+.card__yr i {
+  letter-spacing: -0.015em !important;
+  text-indent: -0.015em !important;
+  font-size: clamp(43.05px, 9.7vw, 59.85px) !important;
+  align-self: flex-end !important;
+  margin-left: auto !important;
+  margin-right: 2% !important;
+}
+.card__yr b {
+  margin-top: -4px !important;
+}
+
+/* =========================================================
+   GENERAL PATCH 2026-08-03 — REQUESTED MICRO ADJUSTMENTS ONLY
+   ========================================================= */
+/* Wedding Day countdown: color only, matching senior edition */
+.dcal__dday,
+.dcal__dday b {
+  color: #9c8f78 !important;
+}
+
+/* RSVP popup: slightly larger panel, 3-line guide text, and larger date digits only */
+.rsvp-modal__panel {
+  width: min(88vw, 345px) !important;
+  max-width: none !important;
+}
+.rsvp-card {
+  padding-bottom: 4% !important;
+}
+.rsvp-modal__summary {
+  font-size: 0.72rem !important;
+  line-height: 1.6 !important;
+  margin-bottom: 14px !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+.rsvp-modal__date {
+  font-size: 0.6rem !important;
+}
+.rsvp-modal__date .rsvp-date-num {
+  font-size: 0.95rem !important;
+}
+
+
+/* =========================================================
+   GENERAL PATCH 2026-08-03 — USER REQUESTED 4 ITEMS ONLY
+   ========================================================= */
+/* 1) 일반용 캘린더: 1~31일 숫자만 조금 확대 */
+.dcal__day i {
+  font-size: 1.08rem !important;
+}
+.dcal__day.is-wedding i {
+  font-size: 1.18rem !important;
+}
+
+/* 2) OUR STORY: 기존 은빛 효과 유지, 문구 축소 및 왼쪽 정렬 */
+.card__yr {
+  left: 8% !important;
+  right: auto !important;
+  width: 84% !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+.card__yr i,
+.card__yr b {
+  font-size: clamp(27px, 6.1vw, 38px) !important;
+  transform: scaleX(0.76) !important;
+  transform-origin: left center !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  align-self: flex-start !important;
+}
+.card__yr i {
+  font-size: clamp(32px, 7.3vw, 45px) !important;
+  letter-spacing: -0.01em !important;
+  text-indent: 0 !important;
+}
+
+/* 3) LOCATION 문구는 config.js에서 '(3분 소요)'로 변경 */
+
+/* 4) CELEBRATION: 계좌 자간 확대, 복사 버튼만 미세 축소 */
+.account-item__detail {
+  letter-spacing: 0.015em !important;
+}
+.account-item__copy {
+  padding: 7px 14px !important;
+  font-size: 0.74rem !important;
+}
+@media (max-width: 360px) {
+  .account-item__copy {
+    padding: 6px 9px !important;
+    font-size: 0.7rem !important;
+  }
+}
+
+/* =========================================================
+   GENERAL PATCH 2026-08-03 — POPUP + OUR STORY ONLY
+   ========================================================= */
+/* 1) 일반용 참석 팝업: 배경 크기는 다시 작게, 내부 안내/예식일 글자는 확대 */
+.rsvp-modal__panel {
+  width: min(304px, calc(100vw - 36px)) !important;
+  max-width: 304px !important;
+}
+.rsvp-card {
+  padding: 4% 12% 3% !important;
+  overflow: hidden !important;
+}
+.rsvp-modal__summary {
+  font-size: clamp(0.79rem, 3.45vw, 0.88rem) !important;
+  line-height: 1.55 !important;
+  margin: 12px 0 12px !important;
+  white-space: normal !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+}
+.rsvp-modal__date {
+  font-size: clamp(0.72rem, 3.05vw, 0.79rem) !important;
+  line-height: 1.35 !important;
+  white-space: nowrap !important;
+}
+.rsvp-modal__date .rsvp-date-num {
+  font-size: clamp(0.9rem, 3.8vw, 1.02rem) !important;
+}
+
+/* 2) 2026 은빛 효과 문구: 효과/크기는 유지하고 위치만 조금 오른쪽으로 */
+.card__yr {
+  left: 12% !important;
+  width: 82% !important;
+}
+
+/* 3) OUR STORY 일반용: 시니어용과 같은 차분한 순차 등장 효과 */
+.ourstory .section__title[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  filter: blur(3px);
+  transition: opacity 1.45s cubic-bezier(0.18, 0.72, 0.2, 1),
+              transform 1.45s cubic-bezier(0.18, 0.72, 0.2, 1),
+              filter 1.25s cubic-bezier(0.18, 0.72, 0.2, 1);
+}
+.ourstory .section__title[data-reveal].is-visible,
+.ourstory .section__title[data-reveal].is-in {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+#story-cards[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px) scale(0.985);
+  filter: blur(4px);
+  transition: opacity 1.65s 0.12s cubic-bezier(0.18, 0.72, 0.2, 1),
+              transform 1.65s 0.12s cubic-bezier(0.18, 0.72, 0.2, 1),
+              filter 1.4s 0.12s cubic-bezier(0.18, 0.72, 0.2, 1);
+}
+#story-cards[data-reveal].is-visible,
+#story-cards[data-reveal].is-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ourstory .section__title[data-reveal],
+  #story-cards[data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+}
+
+
+/* =========================================================
+   GENERAL PATCH 2026-08-03 — RSVP POPUP MICRO SIZE + 3 LINES ONLY
+   ========================================================= */
+.rsvp-modal__panel {
+  width: min(316px, calc(100vw - 28px)) !important;
+  max-width: 316px !important;
+}
+.rsvp-card {
+  padding-left: 9% !important;
+  padding-right: 9% !important;
+}
+.rsvp-modal__summary {
+  font-size: clamp(0.76rem, 3.25vw, 0.87rem) !important;
+  line-height: 1.48 !important;
+}
+.rsvp-modal__summary span {
+  display: block !important;
+  white-space: nowrap !important;
+}
+/* 우리의 이야기 — 엽서 옆으로 넘기는 화살표/점 네비게이션 숨김
+   (어르신들이 이걸로만 넘기고 뒤집기를 발견 못 하셔서 제거) */
+.cards__nav {
+  display: none !important;
+}
+
+/* 아직 안 뒤집힌 엽서 테두리에 확실하게 보이는 은은한 은빛 광채를 줍니다.
+   (기존 카드에 box-shadow: ... !important 가 걸려 있어서 그 속성을
+   직접 애니메이션하면 항상 무시됐습니다 — 그래서 별도의 테두리
+   레이어를 새로 만들어 그 위에 반짝이게 합니다) */
+.card.is-current:not(.is-flipped)[data-flip="1"],
+.card.is-current[data-flip="0"] {
+  position: relative;
+  overflow: visible !important;
+}
+.card.is-current:not(.is-flipped)[data-flip="1"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  animation: cardGlowRing 2.8s ease-in-out infinite;
+}
+.card.is-current[data-flip="0"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  animation: cardBorderFlow 6s ease-in-out infinite;
+}
+@keyframes cardBorderFlow {
+  0%, 100% {
+    box-shadow: 6px 0 18px 2px rgba(238, 234, 224, 0.75);
+  }
+  25% {
+    box-shadow: 0 6px 18px 2px rgba(238, 234, 224, 0.75);
+  }
+  50% {
+    box-shadow: -6px 0 18px 2px rgba(238, 234, 224, 0.75);
+  }
+  75% {
+    box-shadow: 0 -6px 18px 2px rgba(238, 234, 224, 0.75);
+  }
+}
+@keyframes cardGlowRingMain {
+  0%, 100% {
+    box-shadow: 0 0 0 0px rgba(210, 210, 210, 0), 0 0 0px 0 rgba(210, 210, 210, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 1.5px rgba(232, 227, 216, 0.62), 0 0 20px 4px rgba(224, 218, 204, 0.5);
+  }
+}
+@keyframes cardGlowRing {
+  0%, 100% {
+    box-shadow: 0 0 0 0px rgba(210, 206, 198, 0), 0 0 0px 0 rgba(210, 206, 198, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(230, 225, 215, 0.95), 0 0 30px 4px rgba(220, 214, 202, 0.9);
+  }
+}
+/* 카드 표면 위로 부드러운 광택이 한 번씩 스치듯 지나가며 더 고급스럽게.
+   2026(메인) 카드는 조금 더 느긋하고 넓게 스쳐서 특별한 느낌을 줍니다. */
+.card.is-current[data-flip="0"] .card__face--front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 7;
+  background: linear-gradient(
+    118deg,
+    transparent 22%,
+    rgba(255, 253, 248, 0.03) 38%,
+    rgba(255, 253, 248, 0.13) 48%,
+    rgba(255, 253, 248, 0.03) 58%,
+    transparent 74%
+  );
+  background-size: 280% 280%;
+  background-position: 120% 0%;
+  animation: cardSheen 7s ease-in-out infinite;
+}
+@keyframes cardSheen {
+  0%   { background-position: 150% 0%; }
+  32%  { background-position: -60% 0%; }
+  100% { background-position: -60% 0%; }
+}
+
+/* 힌트 문구도 살짝 은은하게 숨쉬듯 (뒷면을 누르세요 — 앞면 상태) */
+.cards__hint {
+  animation: cardsHintFloat 3.2s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(210, 200, 180, 0.5);
+  letter-spacing: 0.04em;
+}
+@keyframes cardsHintFloat {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateY(0px);
+    text-shadow: 0 0 6px rgba(210, 200, 180, 0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+    text-shadow: 0 0 12px rgba(224, 214, 192, 0.65);
+  }
+}
+
+/* 옆으로 넘겨 보세요 — 실제로 좌우로 미끄러지듯 움직이는 모션으로
+   앞면 힌트와 확실히 다르게 표현합니다 */
+.card.is-current.is-flipped[data-flip="1"] {
+  animation: cardNudgeSlide 1.6s ease-in-out infinite;
+}
+@keyframes cardNudgeSlide {
+  0%, 100% { left: 0; }
+  50%      { left: 10px; }
+}
+
+/* 우리의 이야기 카드 스테이지 — 옆 카드가 살짝 삐져나와 보이던 문제를
+   overflow:hidden으로 해결하려 했으나 반짝임 효과까지 깨져서 되돌림 */
+
+/* 카드 가장자리가 오른쪽만 유독 다르게 보이던 문제 — 사진 자체의
+   비대칭한 음영 때문으로 보여, 사방에 똑같은 은은한 음영을 둘러줘서
+   어느 쪽도 다르지 않게 통일합니다(딱딱한 선이 아니라 부드러운 느낌) */
+.card__inner {
+  border: none !important;
+  box-shadow: 0 1px 6px rgba(80, 70, 58, 0.08) !important;
+  outline: 1px solid rgba(120, 110, 95, 0.08) !important;
+  outline-offset: 0 !important;
+}
+
+/* 참석여부 팝업 — 예식일 숫자만 더 크게(한글 부분은 유지), 안내문구는
+   아주 살짝만 더 크게 */
+.rsvp-modal__date .rsvp-date-num {
+  font-size: clamp(1.05rem, 4.4vw, 1.2rem) !important;
+}
+.rsvp-modal__summary {
+  font-size: clamp(0.8rem, 3.4vw, 0.91rem) !important;
+}
+
+/* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 이전에 왼쪽 정렬로
+   맞춰뒀던 규칙이 있어서 너무 왼쪽으로 치우쳐 보였음. 가운데 정렬로 되돌림 */
+.card__yr {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+.card__yr i,
+.card__yr b {
+  transform-origin: center center !important;
+  align-self: center !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
