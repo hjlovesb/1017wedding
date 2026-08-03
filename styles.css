@@ -12262,7 +12262,7 @@ body .section .section__title::after { content: none !important; display: none !
   cursor: pointer;
 }
 
-.card.is-current { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+.card.is-current { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); z-index: 999 !important; }
 
 .card__inner {
   position: relative;
@@ -14545,7 +14545,7 @@ body:not(.intro-active) .invitation {
     box-shadow: 0 0 0 0px rgba(210, 206, 198, 0), 0 0 0px 0 rgba(210, 206, 198, 0);
   }
   50% {
-    box-shadow: 0 0 0 3.5px rgba(245, 240, 228, 1), 0 0 44px 10px rgba(230, 220, 200, 1);
+    box-shadow: 0 0 0 3.5px rgba(245, 240, 228, 1), 0 0 40px 0 rgba(230, 220, 200, 1);
   }
 }
 /* 카드 표면 위로 부드러운 광택이 한 번씩 스치듯 지나가며 더 고급스럽게.
@@ -14619,11 +14619,11 @@ body:not(.intro-active) .invitation {
 /* 참석여부 팝업 — 예식일 숫자만 더 크게(한글 부분은 유지), 안내문구는
    아주 살짝만 더 크게 */
 .rsvp-modal__date .rsvp-date-num {
-  font-size: clamp(1.05rem, 4.4vw, 1.2rem) !important;
+  font-size: clamp(1.35rem, 5.6vw, 1.55rem) !important;
 }
 .rsvp-modal__summary {
   font-size: clamp(0.8rem, 3.4vw, 0.91rem) !important;
-  line-height: 2.1 !important;
+  line-height: 1.7 !important;
 }
 
 /* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 가운데 정렬을 확실히
@@ -14645,7 +14645,7 @@ body:not(.intro-active) .invitation {
 .card__yr b {
   display: block !important;
   width: 100% !important;
-  font-size: 2.7rem !important;
+  font-size: 2.2rem !important;
   font-weight: 300 !important;
   transform: scaleX(0.68) !important;
   transform-origin: center center !important;
@@ -14656,7 +14656,7 @@ body:not(.intro-active) .invitation {
   text-indent: 0 !important;
 }
 .card__yr i {
-  font-size: 3.2rem !important;
+  font-size: 2.6rem !important;
 }
 .card__yr b {
   margin-top: -4px !important;

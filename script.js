@@ -1499,9 +1499,9 @@ async function initStoryPost() {
             content: {
               title: shareData.title,
               description: shareData.text,
-              imageUrl: new URL('images/og/general-link-exact-senior-layout.jpg?v=20260803v4', window.location.href).href,
-              imageWidth: 941,
-              imageHeight: 940,
+              imageUrl: new URL('images/og/general-link-exact-senior-layout.jpg?v=20260803v6', window.location.href).href,
+              imageWidth: 705,
+              imageHeight: 960,
               link: { mobileWebUrl: shareData.url, webUrl: shareData.url }
             },
             buttons: [{
