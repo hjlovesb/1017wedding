@@ -14545,7 +14545,7 @@ body:not(.intro-active) .invitation {
     box-shadow: 0 0 0 0px rgba(210, 206, 198, 0), 0 0 0px 0 rgba(210, 206, 198, 0);
   }
   50% {
-    box-shadow: 0 0 0 2px rgba(230, 225, 215, 0.95), 0 0 30px 4px rgba(220, 214, 202, 0.9);
+    box-shadow: 0 0 0 3.5px rgba(245, 240, 228, 1), 0 0 44px 10px rgba(230, 220, 200, 1);
   }
 }
 /* 카드 표면 위로 부드러운 광택이 한 번씩 스치듯 지나가며 더 고급스럽게.
@@ -14623,33 +14623,40 @@ body:not(.intro-active) .invitation {
 }
 .rsvp-modal__summary {
   font-size: clamp(0.8rem, 3.4vw, 0.91rem) !important;
+  line-height: 2.1 !important;
 }
 
-/* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 시니어판과 완전히
-   동일한 수치로 통일 */
+/* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 가운데 정렬을 확실히
+   보장하기 위해 폭을 100%로 채우고 text-align만으로 정렬, 크기도 키움 */
 .card__yr {
-  left: 6% !important;
-  right: 6% !important;
-  width: auto !important;
-  bottom: 23.5% !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  bottom: 22% !important;
   gap: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
   align-items: center !important;
+  justify-content: center !important;
   text-align: center !important;
 }
 .card__yr i,
 .card__yr b {
-  font-size: 1.95rem !important;
+  display: block !important;
+  width: 100% !important;
+  font-size: 2.7rem !important;
   font-weight: 300 !important;
   transform: scaleX(0.68) !important;
   transform-origin: center center !important;
-  align-self: center !important;
+  text-align: center !important;
   margin-left: auto !important;
   margin-right: auto !important;
   letter-spacing: normal !important;
   text-indent: 0 !important;
 }
 .card__yr i {
-  font-size: 2.3rem !important;
+  font-size: 3.2rem !important;
 }
 .card__yr b {
   margin-top: -4px !important;
