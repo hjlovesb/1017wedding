@@ -14104,7 +14104,7 @@ body:not(.intro-active) .invitation {
 .rsvp-input,
 .rsvp-choice-group,
 .rsvp-submit {
-  width: 94% !important;
+  width: 80% !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
@@ -14470,8 +14470,8 @@ body:not(.intro-active) .invitation {
    GENERAL PATCH 2026-08-03 — RSVP POPUP MICRO SIZE + 3 LINES ONLY
    ========================================================= */
 .rsvp-modal__panel {
-  width: min(272px, calc(100vw - 28px)) !important;
-  max-width: 272px !important;
+  width: min(320px, calc(100vw - 28px)) !important;
+  max-width: 320px !important;
 }
 .rsvp-card {
   padding-left: 9% !important;
@@ -14542,10 +14542,10 @@ body:not(.intro-active) .invitation {
 }
 @keyframes cardGlowRing {
   0%, 100% {
-    box-shadow: 0 0 0 0px rgba(210, 206, 198, 0), 0 0 0px 0 rgba(210, 206, 198, 0);
+    box-shadow: 0 0 0px 0 rgba(210, 206, 198, 0);
   }
   50% {
-    box-shadow: 0 0 0 3.5px rgba(245, 240, 228, 1), 0 0 40px 0 rgba(230, 220, 200, 1);
+    box-shadow: 0 0 32px 0 rgba(230, 220, 200, 0.95);
   }
 }
 /* 카드 표면 위로 부드러운 광택이 한 번씩 스치듯 지나가며 더 고급스럽게.
@@ -14629,16 +14629,16 @@ body:not(.intro-active) .invitation {
    보장하기 위해 폭을 100%로 채우고 text-align만으로 정렬, 크기도 키움 */
 .card__yr {
   position: absolute !important;
-  left: 6% !important;
-  right: 6% !important;
-  width: auto !important;
-  bottom: 25% !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  bottom: 25.5% !important;
   gap: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   justify-content: center !important;
-  text-align: left !important;
+  text-align: center !important;
 }
 .card__yr i,
 .card__yr b {
@@ -14647,18 +14647,19 @@ body:not(.intro-active) .invitation {
   font-size: 2.35rem !important;
   font-weight: 300 !important;
   transform: scaleX(0.68) !important;
-  transform-origin: left center !important;
-  text-align: left !important;
-  margin-left: 0 !important;
+  transform-origin: center center !important;
+  text-align: center !important;
+  margin-left: auto !important;
   margin-right: auto !important;
   letter-spacing: normal !important;
   text-indent: 0 !important;
 }
 .card__yr i {
-  font-size: 2.8rem !important;
+  font-size: 2.75rem !important;
 }
 .card__yr b {
   margin-top: -4px !important;
+  font-size: 2.5rem !important;
 }
 
 /* 갤러리 확대사진 뷰어 배경 — 반투명해서 뒤에 다른 요소(영문 글자,
@@ -14673,6 +14674,11 @@ body:not(.intro-active) .invitation {
    그 아래 배경도 검은색으로 통일 */
 .viewer {
   height: 100dvh !important;
+  height: 100vh !important;
+}
+html.viewer-open,
+html.viewer-open body {
+  background: #000 !important;
 }
 body:has(.viewer.is-active) {
   background: #000 !important;
