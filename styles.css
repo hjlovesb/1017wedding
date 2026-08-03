@@ -14545,7 +14545,7 @@ body:not(.intro-active) .invitation {
     box-shadow: 0 0 0px 0 rgba(210, 206, 198, 0);
   }
   50% {
-    box-shadow: 0 0 32px 0 rgba(230, 220, 200, 0.95);
+    box-shadow: 0 0 40px 0 rgba(232, 222, 202, 1);
   }
 }
 /* 카드 표면 위로 부드러운 광택이 한 번씩 스치듯 지나가며 더 고급스럽게.
