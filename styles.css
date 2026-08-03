@@ -14611,9 +14611,8 @@ body:not(.intro-active) .invitation {
    어느 쪽도 다르지 않게 통일합니다(딱딱한 선이 아니라 부드러운 느낌) */
 .card__inner {
   border: none !important;
-  box-shadow: 0 1px 6px rgba(80, 70, 58, 0.08) !important;
-  outline: 1px solid rgba(120, 110, 95, 0.08) !important;
-  outline-offset: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 /* 참석여부 팝업 — 예식일 숫자만 더 크게(한글 부분은 유지), 안내문구는
@@ -14633,7 +14632,7 @@ body:not(.intro-active) .invitation {
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
-  bottom: 22% !important;
+  bottom: 30% !important;
   gap: 0 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -14645,7 +14644,7 @@ body:not(.intro-active) .invitation {
 .card__yr b {
   display: block !important;
   width: 100% !important;
-  font-size: 2.2rem !important;
+  font-size: 2.75rem !important;
   font-weight: 300 !important;
   transform: scaleX(0.68) !important;
   transform-origin: center center !important;
@@ -14656,7 +14655,7 @@ body:not(.intro-active) .invitation {
   text-indent: 0 !important;
 }
 .card__yr i {
-  font-size: 2.6rem !important;
+  font-size: 3.2rem !important;
 }
 .card__yr b {
   margin-top: -4px !important;
@@ -14667,4 +14666,22 @@ body:not(.intro-active) .invitation {
 .viewer__backdrop {
   background: #000 !important;
   opacity: 1 !important;
+}
+
+/* 갤러리 확대뷰어 — 모바일 브라우저 하단 바(새로고침/공유하기 등)가
+   비쳐 보이던 문제. 실제 보이는 화면 높이(dvh)까지 확실히 덮고,
+   그 아래 배경도 검은색으로 통일 */
+.viewer {
+  height: 100dvh !important;
+}
+body:has(.viewer.is-active) {
+  background: #000 !important;
+}
+
+/* 옆 카드가 살짝 삐져나와 테두리처럼 보이는 문제 — 스테이지 바깥으로
+   넘치는 부분을 확실히 잘라내되, 반짝임 효과가 잘리지 않도록 충분한
+   여백을 확보 */
+.cards__stage {
+  overflow: hidden !important;
+  padding: 50px !important;
 }
