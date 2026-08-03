@@ -14625,12 +14625,12 @@ body:not(.intro-active) .invitation {
   font-size: clamp(0.8rem, 3.4vw, 0.91rem) !important;
 }
 
-/* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 시니어판과 동일한
-   폰트크기/정렬/간격으로 통일 */
+/* 2026 카드 실버텍스트(WEDDING DAY / 예식일자) — 시니어판과 완전히
+   동일한 수치로 통일 */
 .card__yr {
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
+  left: 6% !important;
+  right: 6% !important;
+  width: auto !important;
   bottom: 23.5% !important;
   gap: 0 !important;
   align-items: center !important;
