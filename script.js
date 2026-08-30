@@ -656,7 +656,7 @@ async function initCalendar() {
     .map(
       (src, i) => `
         <div class="gallery__item" data-index="${i}">
-          <img src="${src}" alt="갤러리 사진 ${i + 1}" loading="lazy" />
+          <img src="${src}" alt="갤러리 사진 ${i + 1}" loading="lazy" decoding="async" />
         </div>
       `
     )
@@ -1786,7 +1786,9 @@ async function initStoryPost() {
           let cls = 'location-transport__line';
           if (/^\[/.test(ln)) cls += ' is-label';
           else if (/^＊/.test(ln)) cls += ' is-note';
+          else if (/^[　\s]/.test(ln)) cls += ' is-note';
           else if (/^제\s?\d/.test(ln)) cls += ' is-sub';
+          ln = ln.replace(/(\([^)]*\))/g, '<span class="location-transport__detail">$1</span>');
           return `<p class="${cls}">${ln}</p>`;
         })
         .join('');

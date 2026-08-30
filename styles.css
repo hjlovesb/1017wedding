@@ -14605,17 +14605,18 @@ body:not(.intro-active) .invitation {
   animation: cardsHintFloat 3.2s ease-in-out infinite;
   text-shadow: 0 0 10px rgba(210, 200, 180, 0.5);
   letter-spacing: 0.04em;
+  font-size: 0.92rem !important;
 }
 @keyframes cardsHintFloat {
   0%, 100% {
-    opacity: 0.6;
+    opacity: 0.65;
     transform: translateY(0px);
-    text-shadow: 0 0 6px rgba(210, 200, 180, 0.3);
+    text-shadow: 0 0 6px rgba(210, 200, 180, 0.35);
   }
   50% {
     opacity: 1;
     transform: translateY(-3px);
-    text-shadow: 0 0 12px rgba(224, 214, 192, 0.65);
+    text-shadow: 0 0 18px rgba(230, 218, 190, 0.9), 0 0 6px rgba(255, 250, 235, 0.6);
   }
 }
 
@@ -14658,7 +14659,7 @@ body:not(.intro-active) .invitation {
   left: 0 !important;
   right: 0 !important;
   width: 100% !important;
-  bottom: 25.5% !important;
+  bottom: 23% !important;
   gap: 0 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -14682,10 +14683,11 @@ body:not(.intro-active) .invitation {
 }
 .card__yr i {
   font-size: 2.75rem !important;
+  transform: scaleX(0.68) translateX(6px) !important;
 }
 .card__yr b {
   margin-top: -4px !important;
-  font-size: 2.5rem !important;
+  font-size: 3.1rem !important;
 }
 
 /* 갤러리 확대사진 뷰어 배경 — 반투명해서 뒤에 다른 요소(영문 글자,
@@ -14713,3 +14715,16 @@ body:has(.viewer.is-active) {
 /* 옆 카드가 살짝 삐져나와 테두리처럼 보이는 문제 — 스테이지 바깥으로
    /* 옆 카드가 살짝 삐져나와 보이는 문제를 overflow:hidden으로 해결하려
    했으나 반짝임 효과까지 같이 사라져서 되돌림(반짝임 효과가 우선) */
+
+/* 각주 안 괄호 — 색을 진하게, 들여쓰기된 줄에서는 윗줄과 같은 크기로 */
+.location-transport__detail {
+  color: #3f3a33 !important;
+}
+.location-transport__line.is-note .location-transport__detail {
+  font-size: inherit !important;
+  font-weight: 500 !important;
+}
+.location-transport__line.is-note {
+  margin-top: 1px !important;
+  margin-bottom: 1px !important;
+}
