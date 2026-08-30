@@ -645,7 +645,7 @@ async function initCalendar() {
     </div>
   `;
 
-  galleryImages = Array.from({ length: 20 }, (_, i) => `images/gallery/${i + 1}.jpg`);
+  galleryImages = Array.from({ length: 22 }, (_, i) => `images/gallery/${i + 1}.jpg`);
 
   if (galleryImages.length === 0) {
     grid.innerHTML = '';
